@@ -19,11 +19,13 @@ header span{font-size:11px;opacity:.7}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
 input,select{width:100%;padding:8px 11px;border:1.5px solid var(--bd);border-radius:7px;font-size:14px;color:var(--text);background:#fff}
 input:focus,select:focus{outline:none;border-color:var(--pri2)}
+.tab-row{display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid var(--bd)}
+.tab{padding:8px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s}
+.tab.on{color:var(--pri);border-bottom-color:var(--pri)}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:5px}
 .chip{padding:5px 13px;border:1.5px solid var(--bd);border-radius:20px;font-size:13px;cursor:pointer;background:#f8f9fa;transition:.15s;user-select:none}
 .chip.on{background:var(--pri);border-color:var(--pri);color:#fff}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
-.btn-main{background:var(--pri);color:#fff;width:100%;justify-content:center;margin-top:8px;font-size:15px;padding:12px}
+.btn-main{background:var(--pri);color:#fff;width:100%;border:none;border-radius:7px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;padding:12px;display:flex;align-items:center;justify-content:center;gap:6px}
 .btn-main:hover{background:var(--pri2)}
 .btn-main:disabled{background:#aaa;cursor:not-allowed}
 .btn-sm{background:#fff;color:var(--text);border:1.5px solid var(--bd);padding:7px 13px;font-size:13px;border-radius:7px;cursor:pointer}
@@ -42,9 +44,9 @@ input:focus,select:focus{outline:none;border-color:var(--pri2)}
 .tw{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:#f0f3f6;padding:8px 10px;text-align:left;white-space:nowrap;border-bottom:2px solid var(--bd);color:var(--muted);font-weight:600}
-td{padding:7px 10px;border-bottom:1px solid #f0f0f0;vertical-align:top;word-break:break-word;max-width:200px}
+td{padding:7px 10px;border-bottom:1px solid #f0f0f0;vertical-align:top;word-break:break-word;max-width:220px}
 tr:hover td{background:#f8fbff}
-.amt{text-align:right;white-space:nowrap}
+.amt{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .tag{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
 .t-bdm{background:#dcfce7;color:#166534}
 .t-tiq{background:#dbeafe;color:#1e40af}
@@ -53,9 +55,9 @@ tr:hover td{background:#f8fbff}
 .vl{color:var(--pri2);text-decoration:none;font-size:11px}
 .vl:hover{text-decoration:underline}
 .empty{text-align:center;color:#aaa;padding:40px;font-size:14px}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-right:6px}
+.spin{display:inline-block;width:14px;height:14px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:600px){.g2,.g3{grid-template-columns:1fr}.fi{width:120px}}
+@media(max-width:600px){.g2,.g3{grid-template-columns:1fr}.fi{width:110px}}
 </style>
 </head>
 <body>
@@ -63,20 +65,52 @@ tr:hover td{background:#f8fbff}
 <div class="wrap">
 
 <div class="card">
-  <div class="g2">
-    <div><div class="lbl">關鍵字（多個用空格或逗號分隔）</div>
-      <input id="kw" type="text" placeholder="例：顯微鏡 Bio-Rad 離心機"></div>
-    <div><div class="lbl">查詢年度</div>
-      <select id="year">
-        <option value="">全部年度</option>
-        <option value="2025" selected>2025年（民國114）</option>
-        <option value="2024">2024年（民國113）</option>
-        <option value="2023">2023年（民國112）</option>
-        <option value="2022">2022年（民國111）</option>
-        <option value="2021">2021年（民國110）</option>
-      </select>
+  <!-- Search mode tabs -->
+  <div class="tab-row">
+    <div class="tab on" id="tab-kw" onclick="switchTab('kw')">標案名稱搜尋</div>
+    <div class="tab" id="tab-co" onclick="switchTab('co')">公司名稱搜尋</div>
+  </div>
+
+  <!-- Keyword search fields -->
+
+  <div id="pane-kw">
+    <div class="g2">
+      <div><div class="lbl">關鍵字（多個用空格或逗號分隔）</div>
+        <input id="kw" type="text" placeholder="例：顯微鏡 Bio-Rad 離心機"></div>
+      <div><div class="lbl">查詢年度</div>
+        <select id="year">
+          <option value="">全部年度</option>
+          <option value="2025" selected>2025年（民國114）</option>
+          <option value="2024">2024年（民國113）</option>
+          <option value="2023">2023年（民國112）</option>
+          <option value="2022">2022年（民國111）</option>
+          <option value="2021">2021年（民國110）</option>
+        </select>
+      </div>
     </div>
   </div>
+
+  <!-- Company search fields -->
+
+  <div id="pane-co" style="display:none">
+    <div class="g2">
+      <div><div class="lbl">公司名稱（支援部分名稱模糊搜尋）</div>
+        <input id="co" type="text" placeholder="例：上宸光學、卡爾蔡司、久和醫療"></div>
+      <div><div class="lbl">查詢年度</div>
+        <select id="year2">
+          <option value="">全部年度</option>
+          <option value="2025" selected>2025年（民國114）</option>
+          <option value="2024">2024年（民國113）</option>
+          <option value="2023">2023年（民國112）</option>
+          <option value="2022">2022年（民國111）</option>
+          <option value="2021">2021年（民國110）</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Common filters -->
+
   <div class="g3">
     <div><div class="lbl">標案狀態</div>
       <select id="atype">
@@ -110,7 +144,7 @@ tr:hover td{background:#f8fbff}
       <div class="chip on" data-v="nhri">國衛院採購</div>
     </div>
   </div>
-  <button class="btn btn-main" id="runBtn" onclick="run()">開始查詢</button>
+  <button class="btn-main" id="runBtn" onclick="run()">開始查詢</button>
 </div>
 
 <div class="card">
@@ -118,8 +152,8 @@ tr:hover td{background:#f8fbff}
     <div class="lbl" style="margin:0">查詢結果</div>
     <span class="cnt" id="cnt"></span>
     <input class="fi" id="fi" placeholder="篩選..." oninput="doFilter()" style="display:none">
-    <button class="btn btn-sm" id="exBtn" onclick="doExcel()" style="display:none">↓ Excel</button>
-    <button class="btn btn-sm btn-gr" id="shBtn" onclick="doSheet()" style="display:none">📊 Google Sheet</button>
+    <button class="btn-sm" id="exBtn" onclick="doExcel()" style="display:none">↓ Excel</button>
+    <button class="btn-sm btn-gr" id="shBtn" onclick="doSheet()" style="display:none">📊 Google Sheet</button>
   </div>
   <div id="sb" class="sb"></div>
   <div class="pg" id="pg"></div>
@@ -131,8 +165,19 @@ tr:hover td{background:#f8fbff}
 
 <script>
 const API = 'https://pcc-api.openfun.app/api';
+const VIEWER = 'https://openfunltd.github.io/pcc-viewer';
 let tType = '', activeSrc = new Set(['pcc','sinica','nhri']);
+let activeTab = 'kw';
 let allData = [], filteredData = [];
+
+// Tab switch
+function switchTab(t) {
+  activeTab = t;
+  ['kw','co'].forEach(x => {
+    document.getElementById('tab-'+x).classList.toggle('on', x===t);
+    document.getElementById('pane-'+x).style.display = x===t ? '' : 'none';
+  });
+}
 
 // Chip toggles
 document.querySelectorAll('#typeChips .chip').forEach(c => {
@@ -142,26 +187,50 @@ document.querySelectorAll('#typeChips .chip').forEach(c => {
   };
 });
 document.querySelectorAll('#srcChips .chip').forEach(c => {
-  c.onclick = () => {
-    c.classList.toggle('on');
-    activeSrc[c.classList.contains('on') ? 'add' : 'delete'](c.dataset.v);
-  };
+  c.onclick = () => { c.classList.toggle('on'); activeSrc[c.classList.contains('on')?'add':'delete'](c.dataset.v); };
 });
 
 const $=id=>document.getElementById(id);
 function setSb(m,t){const b=$('sb');b.textContent=m;b.className='sb '+(t||'info');}
 function setPg(m){$('pg').textContent=m;}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-// ── Type tag helper ────────────────────────────────────
+// Type tag
 function typeTag(type) {
-  if (!type) return '';
-  const map = {'決標公告':'t-bdm','招標公告':'t-tiq','無法決標公告':'t-nai'};
-  const cls = map[type] || 't-oth';
-  const short = type.replace('公告','');
-  return `<span class="tag ${cls}">${short}</span>`;
+  const map={'決標公告':'t-bdm','招標公告':'t-tiq','無法決標公告':'t-nai'};
+  return type ? `<span class="tag ${map[type]||'t-oth'}">${type.replace('公告','')}</span>` : '';
 }
 
-// ── PCC API ────────────────────────────────────────────
+// Map API record to row
+function recToRow(rec, src) {
+  const type = rec.brief?.type || '';
+  const cat  = rec.brief?.category || '';
+  // Category filter: only filter if category is present
+  if (tType && cat && !cat.includes(tType)) return null;
+  const vendor = (rec.brief?.companies?.names || []).join('、');
+  const viewerUrl = VIEWER + (rec.url || '');
+  return {
+    來源: src==='pcc'?'PCC':src==='sinica'?'中研院':'國衛院',
+    來源標籤: src,
+    公告類型: type,
+    機關名稱: rec.unit_name || '',
+    單位名稱: rec.unit_name || '',
+    標案案號: rec.job_number || '',
+    標案名稱: rec.brief?.title || '',
+    標的分類: cat,
+    招標方式: '',
+    決標方式: '',
+    預算金額: '',
+    決標金額: '',
+    底價金額: '',
+    得標廠商: vendor,
+    決標日期: formatDate(rec.date),
+    來源網址: viewerUrl,
+    _tenderUrl: rec.tender_api_url || ''
+  };
+}
+
+// ── PCC: search by title ───────────────────────────────
 async function fetchPCC(keyword, maxn, year, atype) {
   const results = [];
   let page = 1;
@@ -171,7 +240,6 @@ async function fetchPCC(keyword, maxn, year, atype) {
   while (results.length < maxn) {
     let url = `${API}/searchbytitle?query=${encodeURIComponent(keyword)}&page=${page}`;
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
-
     const r = await fetch(url);
     if (!r.ok) break;
     const d = await r.json();
@@ -179,86 +247,102 @@ async function fetchPCC(keyword, maxn, year, atype) {
 
     for (const rec of d.records) {
       if (results.length >= maxn) break;
-      const type = rec.brief?.type || '';
-      if (atype && type !== atype) continue;
-      const cat = rec.brief?.category || '';
-      if (tType && !cat.includes(tType)) continue;
-
-      const vendor = (rec.brief?.companies?.names || []).join('、');
-      const tUrl = `https://pcc-api.openfun.app${rec.url}`;
-
-      results.push({
-        來源: 'PCC', 來源標籤: 'pcc',
-        公告類型: type,
-        機關名稱: rec.unit_name || '',
-        單位名稱: rec.unit_name || '',
-        標案案號: rec.job_number || '',
-        標案名稱: rec.brief?.title || '',
-        招標方式: '', 決標方式: '',
-        預算金額: '',
-        決標金額: '',
-        底價金額: '',
-        得標廠商: vendor,
-        決標日期: formatDate(rec.date),
-        來源網址: tUrl
-      });
+      if (atype && rec.brief?.type !== atype) continue;
+      const row = recToRow(rec, 'pcc');
+      if (row) results.push(row);
     }
-    if (page >= (d.total_pages || 1)) break;
+    if (page >= (d.total_pages||1)) break;
     page++;
   }
   return results;
 }
 
-// ── Fetch tender detail for amounts ───────────────────
-async function enrichWithAmounts(rows, onProgress) {
-  // Only enrich 決標公告 rows that need it
-  const toEnrich = rows.filter(r => r.來源==='PCC' && r.公告類型==='決標公告');
-  for (let i = 0; i < toEnrich.length; i++) {
-    const row = toEnrich[i];
-    onProgress && onProgress(i+1, toEnrich.length);
+// ── PCC: search by company ─────────────────────────────
+async function fetchPCCbyCompany(company, maxn, year, atype) {
+  const results = [];
+  let page = 1;
+  const datebegin = year ? year+'-01-01' : '';
+  const dateend   = year ? year+'-12-31' : '';
+
+  while (results.length < maxn) {
+    let url = `${API}/searchbycompany?company=${encodeURIComponent(company)}&page=${page}`;
+    if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
+    const r = await fetch(url);
+    if (!r.ok) break;
+    const d = await r.json();
+    if (!d.records?.length) break;
+
+    for (const rec of d.records) {
+      if (results.length >= maxn) break;
+      if (atype && rec.brief?.type !== atype) continue;
+      const row = recToRow(rec, 'pcc');
+      if (row) results.push(row);
+    }
+    if (page >= (d.total_pages||1)) break;
+    page++;
+  }
+  return results;
+}
+
+// ── Enrich amounts via tender API ──────────────────────
+async function enrichAmounts(rows) {
+  const toEnrich = rows.filter(r => r.來源==='PCC' && r._tenderUrl);
+  let done = 0;
+  for (const row of toEnrich) {
+    setPg(`取得金額 ${++done}/${toEnrich.length}...`);
     try {
-      // Extract unit_id and job_number from URL
-      const parts = row.來源網址.split('/');
-      // URL format: /index/case/{unit_id}/{job_number}/{date}/{filename}
-      const idx = parts.indexOf('case');
-      if (idx >= 0) {
-        const unit_id = parts[idx+1];
-        const job_number = parts[idx+2];
-        const tUrl = `${API}/tender?unit_id=${encodeURIComponent(unit_id)}&job_number=${encodeURIComponent(job_number)}`;
-        const tr = await fetch(tUrl);
-        if (tr.ok) {
-          const td = await tr.json();
-          const rec = td.records?.[0];
-          if (rec) {
-            row.招標方式 = rec.brief?.procurement_method || '';
-            row.決標方式 = rec.brief?.award_type || '';
-            // Extract amounts from detail
-            const det = rec.detail || {};
-            row.預算金額 = extractAmt(det, ['預算金額','budget','budget_amount']);
-            row.決標金額 = extractAmt(det, ['決標金額','award_price','final_price']);
-            row.底價金額 = extractAmt(det, ['底價金額','base_price','reserve_price']);
-            if (!row.得標廠商 && rec.brief?.companies?.names?.length) {
-              row.得標廠商 = rec.brief.companies.names.join('、');
-            }
-          }
-        }
+      const r = await fetch(row._tenderUrl);
+      if (!r.ok) continue;
+      const d = await r.json();
+      // The tender API may return multiple records (multiple dates for same job)
+      // Find the matching one (決標 type preferred)
+      const recs = d.records || [];
+      const target = recs.find(x=>x.brief?.type==='決標公告') || recs[0];
+      if (!target) continue;
+      const det = target.detail || {};
+      // Try to extract amounts - scan all keys
+      row.預算金額 = findAmt(det, ['預算金額','budget_amount','budget']);
+      row.決標金額 = findAmt(det, ['決標金額','award_price','final_price','得標金額']);
+      row.底價金額 = findAmt(det, ['底價金額','base_price','reserve_price','底價']);
+      row.招標方式 = findStr(det, ['招標方式','procurement_method']);
+      row.決標方式 = findStr(det, ['決標方式','award_type','決標類型']);
+      // Also update vendor if empty
+      if (!row.得標廠商) {
+        const names = target.brief?.companies?.names || [];
+        if (names.length) row.得標廠商 = names.join('、');
       }
-    } catch(e) { /* skip */ }
-    await sleep(150);
+    } catch(e) {}
+    await sleep(200);
+    // Re-render every 5 rows
+    if (done % 5 === 0) renderTable(allData);
   }
 }
 
-function extractAmt(det, keys) {
+function findAmt(obj, keys) {
   for (const k of keys) {
-    if (det[k] !== undefined && det[k] !== '') {
-      const m = String(det[k]).replace(/,/g,'').match(/\d+/);
+    if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') {
+      const m = String(obj[k]).replace(/,/g,'').match(/\d+/);
       if (m) return m[0];
+    }
+  }
+  // Also scan all keys for amount-like values
+  for (const k of Object.keys(obj)) {
+    if (k.includes('金額') || k.includes('price') || k.includes('amount')) {
+      const m = String(obj[k]).replace(/,/g,'').match(/\d+/);
+      if (m && parseInt(m[0]) > 0) return m[0];
     }
   }
   return '';
 }
 
-// ── Sinica scrape ──────────────────────────────────────
+function findStr(obj, keys) {
+  for (const k of keys) {
+    if (obj[k]) return String(obj[k]).trim();
+  }
+  return '';
+}
+
+// ── Sinica ─────────────────────────────────────────────
 async function fetchSinica(keyword) {
   const results = [];
   try {
@@ -273,22 +357,22 @@ async function fetchSinica(keyword) {
       const link = tr.querySelector('a');
       results.push({
         來源:'中研院', 來源標籤:'sinica', 公告類型:'決標公告',
-        機關名稱:'中央研究院', 單位名稱: tds[1]?.innerText?.trim()||'',
-        標案案號: tds[0]?.innerText?.trim()||'',
-        標案名稱: tds[2]?.innerText?.trim()||'',
-        招標方式:'', 決標方式:'', 預算金額:'',
-        決標金額: cleanAmt(tds[4]?.innerText||''),
-        底價金額:'',
-        得標廠商: tds[5]?.innerText?.trim()||'',
-        決標日期: tds[3]?.innerText?.trim()||'',
-        來源網址: link ? 'https://srp.sinica.edu.tw'+link.getAttribute('href') : url
+        機關名稱:'中央研究院', 單位名稱:tds[1]?.innerText?.trim()||'',
+        標案案號:tds[0]?.innerText?.trim()||'',
+        標案名稱:tds[2]?.innerText?.trim()||'',
+        標的分類:'', 招標方式:'', 決標方式:'', 預算金額:'',
+        決標金額:cleanAmt(tds[4]?.innerText||''), 底價金額:'',
+        得標廠商:tds[5]?.innerText?.trim()||'',
+        決標日期:tds[3]?.innerText?.trim()||'',
+        來源網址:link ? 'https://srp.sinica.edu.tw'+link.getAttribute('href') : url,
+        _tenderUrl:''
       });
     });
   } catch(e) {}
   return results;
 }
 
-// ── NHRI scrape ────────────────────────────────────────
+// ── NHRI ───────────────────────────────────────────────
 async function fetchNHRI(keyword) {
   const results = [];
   try {
@@ -304,14 +388,14 @@ async function fetchNHRI(keyword) {
       results.push({
         來源:'國衛院', 來源標籤:'nhri', 公告類型:'決標公告',
         機關名稱:'國家衛生研究院', 單位名稱:'',
-        標案案號: tds[0]?.innerText?.trim()||'',
-        標案名稱: tds[1]?.innerText?.trim()||'',
-        招標方式:'', 決標方式:'', 預算金額:'',
-        決標金額: cleanAmt(tds[3]?.innerText||''),
-        底價金額:'',
-        得標廠商: tds[4]?.innerText?.trim()||'',
-        決標日期: tds[2]?.innerText?.trim()||'',
-        來源網址: link ? 'https://supplier.nhri.edu.tw'+link.getAttribute('href') : url
+        標案案號:tds[0]?.innerText?.trim()||'',
+        標案名稱:tds[1]?.innerText?.trim()||'',
+        標的分類:'', 招標方式:'', 決標方式:'', 預算金額:'',
+        決標金額:cleanAmt(tds[3]?.innerText||''), 底價金額:'',
+        得標廠商:tds[4]?.innerText?.trim()||'',
+        決標日期:tds[2]?.innerText?.trim()||'',
+        來源網址:link ? 'https://supplier.nhri.edu.tw'+link.getAttribute('href') : url,
+        _tenderUrl:''
       });
     });
   } catch(e) {}
@@ -322,143 +406,125 @@ async function fetchNHRI(keyword) {
 function formatDate(d) {
   if (!d) return '';
   const s = String(d);
-  if (s.length === 8) return s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8);
-  return s;
+  return s.length===8 ? s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8) : s;
 }
-function cleanAmt(s) {
-  const m = String(s).replace(/,/g,'').match(/\d+/);
-  return m ? m[0] : '';
-}
-function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+function cleanAmt(s) { const m=String(s).replace(/,/g,'').match(/\d+/); return m?m[0]:''; }
 
 // ── Main ───────────────────────────────────────────────
 async function run() {
-  const kw = $('kw').value.trim();
-  if (!kw) { setSb('請輸入關鍵字','warn'); return; }
+  const isCompany = activeTab === 'co';
+  const kwRaw = isCompany ? $('co').value.trim() : $('kw').value.trim();
+  if (!kwRaw) { setSb(isCompany?'請輸入公司名稱':'請輸入關鍵字','warn'); return; }
   if (!activeSrc.size) { setSb('請至少選一個查詢來源','warn'); return; }
 
   const btn = $('runBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>查詢中...';
+  btn.innerHTML = '<span class="spin"></span> 查詢中...';
   allData = []; filteredData = [];
   $('tw').innerHTML = '<div class="empty">查詢中...</div>';
-  $('fi').style.display = 'none';
-  $('exBtn').style.display = 'none';
-  $('shBtn').style.display = 'none';
+  $('fi').style.display='none'; $('exBtn').style.display='none'; $('shBtn').style.display='none';
   $('cnt').textContent = '';
 
-  const keywords = kw.split(/[,，\s]+/).map(k=>k.trim()).filter(k=>k);
-  const year = $('year').value;
+  const year = isCompany ? $('year2').value : $('year').value;
   const atype = $('atype').value;
   const maxn = parseInt($('maxn').value);
+  const keywords = kwRaw.split(/[,，\s]+/).map(k=>k.trim()).filter(k=>k);
 
   setSb('正在取得標案列表...','info');
 
   try {
-    for (const keyword of keywords) {
-      setPg(`搜尋「${keyword}」中...`);
+    for (const kw of keywords) {
+      setPg(`搜尋「${kw}」中...`);
       const tasks = [];
-      if (activeSrc.has('pcc')) tasks.push(fetchPCC(keyword, maxn, year, atype).catch(()=>[]));
-      if (activeSrc.has('sinica')) tasks.push(fetchSinica(keyword).catch(()=>[]));
-      if (activeSrc.has('nhri')) tasks.push(fetchNHRI(keyword).catch(()=>[]));
+      if (activeSrc.has('pcc')) {
+        const fn = isCompany ? fetchPCCbyCompany : fetchPCC;
+        tasks.push(fn(kw, maxn, year, atype).catch(()=>[]));
+      }
+      if (!isCompany) {
+        if (activeSrc.has('sinica')) tasks.push(fetchSinica(kw).catch(()=>[]));
+        if (activeSrc.has('nhri'))   tasks.push(fetchNHRI(kw).catch(()=>[]));
+      }
       const batches = await Promise.all(tasks);
       batches.forEach(b => allData.push(...b));
       renderTable(allData);
     }
 
-    // Enrich with amounts for PCC 決標 records
-    const needEnrich = allData.filter(r=>r.來源==='PCC' && r.公告類型==='決標公告' && !r.決標金額);
-    if (needEnrich.length > 0) {
-      setSb(`取得決標金額中（共 ${needEnrich.length} 筆）...`,'info');
-      await enrichWithAmounts(allData, (i, total) => {
-        setPg(`取得金額 ${i}/${total}...`);
-        if (i % 5 === 0) renderTable(allData);
-      });
+    // Try to enrich amounts
+    const toEnrich = allData.filter(r=>r.來源==='PCC' && r._tenderUrl && r.公告類型==='決標公告');
+    if (toEnrich.length > 0) {
+      setSb(`基本資料已載入 ${allData.length} 筆，嘗試取得金額（${toEnrich.length} 筆）...`,'info');
+      await enrichAmounts(allData);
     }
 
     filteredData = [...allData];
     renderTable(filteredData);
     setSb(`查詢完成，共 ${allData.length} 筆`,'ok');
     setPg('');
-
-    if (allData.length > 0) {
-      $('fi').style.display = '';
-      $('exBtn').style.display = '';
-      $('shBtn').style.display = '';
-    }
+    if (allData.length > 0) { $('fi').style.display=''; $('exBtn').style.display=''; $('shBtn').style.display=''; }
   } catch(e) { setSb('錯誤：'+e.message,'err'); }
 
-  btn.disabled = false; btn.textContent = '開始查詢';
+  btn.disabled=false; btn.textContent='開始查詢';
 }
 
 // ── Render ─────────────────────────────────────────────
-const COLS = ['公告類型','機關名稱','標案案號','標案名稱','招標方式','決標方式','預算金額','決標金額','底價金額','得標廠商','決標日期','連結'];
-const AMT_COLS = new Set(['預算金額','決標金額','底價金額']);
+const COLS=['公告類型','機關名稱','標案案號','標案名稱','招標方式','決標方式','預算金額','決標金額','底價金額','得標廠商','決標日期','連結'];
+const AMT=new Set(['預算金額','決標金額','底價金額']);
 
 function renderTable(data) {
-  $('cnt').textContent = '共 '+data.length+' 筆';
+  $('cnt').textContent='共 '+data.length+' 筆';
   if (!data.length) { $('tw').innerHTML='<div class="empty">無符合資料</div>'; return; }
-  let h = '<table><thead><tr>'+COLS.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>';
-  data.forEach(r => {
-    h += '<tr>';
-    COLS.forEach(c => {
-      if (c==='公告類型') {
-        h += `<td>${typeTag(r[c])}</td>`;
-      } else if (c==='連結') {
-        h += `<td><a class="vl" href="${r['來源網址']||''}" target="_blank">檢視</a></td>`;
-      } else if (AMT_COLS.has(c)) {
-        const v = r[c] ? parseInt(r[c]).toLocaleString() : '';
-        h += `<td class="amt">${v}</td>`;
-      } else {
-        h += `<td>${r[c]||''}</td>`;
-      }
+  let h='<table><thead><tr>'+COLS.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>';
+  data.forEach(r=>{
+    h+='<tr>';
+    COLS.forEach(c=>{
+      if(c==='公告類型') h+=`<td>${typeTag(r[c])}</td>`;
+      else if(c==='連結') h+=`<td><a class="vl" href="${r['來源網址']||''}" target="_blank">檢視</a></td>`;
+      else if(AMT.has(c)) h+=`<td class="amt">${r[c]?parseInt(r[c]).toLocaleString():''}</td>`;
+      else h+=`<td>${r[c]||''}</td>`;
     });
-    h += '</tr>';
+    h+='</tr>';
   });
-  h += '</tbody></table>';
-  $('tw').innerHTML = h;
+  h+='</tbody></table>';
+  $('tw').innerHTML=h;
 }
 
-// ── Filter ─────────────────────────────────────────────
 function doFilter() {
-  const kw = $('fi').value.toLowerCase();
-  filteredData = kw ? allData.filter(r=>JSON.stringify(r).toLowerCase().includes(kw)) : [...allData];
+  const kw=$('fi').value.toLowerCase();
+  filteredData=kw?allData.filter(r=>JSON.stringify(r).toLowerCase().includes(kw)):[...allData];
   renderTable(filteredData);
 }
 
-// ── Excel ──────────────────────────────────────────────
 function doExcel() {
   if (!filteredData.length) return;
-  const cols = [...COLS.filter(c=>c!=='連結'),'來源網址'];
-  const rows = filteredData.map(r => {
-    const obj={};
-    cols.forEach(c => { obj[c] = AMT_COLS.has(c) && r[c] ? parseInt(r[c]) : (r[c]||''); });
-    return obj;
+  const cols=[...COLS.filter(c=>c!=='連結'),'標的分類','來源網址'];
+  const rows=filteredData.map(r=>{
+    const o={};
+    cols.forEach(c=>{ o[c]=AMT.has(c)&&r[c]?parseInt(r[c]):(r[c]||''); });
+    return o;
   });
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '採購查詢');
-  XLSX.writeFile(wb, '採購查詢_'+$('kw').value.trim().replace(/[\/\\?*[\] ,]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'採購查詢');
+  const fn=($('co').value||$('kw').value).trim().replace(/[\/\\?*[\] ,]/g,'_');
+  XLSX.writeFile(wb,'採購查詢_'+fn+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
-// ── Google Sheet (CSV + open) ──────────────────────────
 function doSheet() {
   if (!filteredData.length) return;
-  const btn = $('shBtn');
-  btn.disabled=true; btn.textContent='準備中...';
-  const cols = [...COLS.filter(c=>c!=='連結'),'來源網址'];
-  const esc = v => { const s=String(v||''); return (s.includes(',')||s.includes('"')||s.includes('\n')) ? '"'+s.replace(/"/g,'""')+'"' : s; };
-  const csv = [cols, ...filteredData.map(r=>cols.map(c=>esc(r[c]||'')))].map(row=>row.join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '採購查詢_'+new Date().toISOString().slice(0,10)+'.csv';
+  const btn=$('shBtn'); btn.disabled=true; btn.textContent='準備中...';
+  const cols=[...COLS.filter(c=>c!=='連結'),'標的分類','來源網址'];
+  const esc=v=>{const s=String(v||'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;};
+  const csv=[cols,...filteredData.map(r=>cols.map(c=>esc(r[c]||'')))].map(row=>row.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='採購查詢_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click(); URL.revokeObjectURL(a.href);
-  setTimeout(()=>{ window.open('https://sheets.new','_blank'); setSb('CSV 已下載，在新開的 Google Sheet 中選「檔案 → 匯入」載入','ok'); },500);
+  setTimeout(()=>{window.open('https://sheets.new','_blank'); setSb('CSV已下載，在 Google Sheet 選「檔案→匯入」','ok');},400);
   btn.disabled=false; btn.textContent='📊 Google Sheet';
 }
 
-$('kw').addEventListener('keydown', e=>{ if(e.key==='Enter') run(); });
+document.getElementById('kw').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+document.getElementById('co').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
 </script>
 
 </body>
