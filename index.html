@@ -165,7 +165,7 @@ tr:hover td{background:#f8fbff}
 
 <script>
 const API = 'https://pcc-api.openfun.app/api';
-const VIEWER = 'https://openfunltd.github.io/pcc-viewer';
+
 let tType = '', activeSrc = new Set(['pcc','sinica','nhri']);
 let activeTab = 'kw';
 let allData = [], filteredData = [];
@@ -208,7 +208,7 @@ function recToRow(rec, src) {
   // Category filter: only filter if category is present
   if (tType && cat && !cat.includes(tType)) return null;
   const vendor = (rec.brief?.companies?.names || []).join('、');
-  const viewerUrl = VIEWER + (rec.url || '');
+  const viewerUrl = 'https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?querySentence=' + encodeURIComponent(rec.job_number || '');
   return {
     來源: src==='pcc'?'PCC':src==='sinica'?'中研院':'國衛院',
     來源標籤: src,
@@ -467,7 +467,7 @@ async function run() {
 }
 
 // ── Render ─────────────────────────────────────────────
-const COLS=['公告類型','機關名稱','標案案號','標案名稱','招標方式','決標方式','預算金額','決標金額','底價金額','得標廠商','決標日期','連結'];
+const COLS=['來源','公告類型','機關名稱','標案案號','標案名稱','招標方式','決標方式','預算金額','決標金額','底價金額','得標廠商','決標日期','連結'];
 const AMT=new Set(['預算金額','決標金額','底價金額']);
 
 function renderTable(data) {
