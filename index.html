@@ -252,33 +252,31 @@ async function fetchPCC(keyword, maxn, year, atype) {
   return results;
 }
 
-// ── PCC: search by company (filter from title search + companies field) ───
+// ── PCC: search by company ─────────────────────────────
+// g0v API's searchbytitle does full-text search including company names,
+// so searching company name as keyword works directly.
 async function fetchPCCbyCompany(company, maxn, year, atype) {
   const results = [];
   let page = 1;
   const datebegin = year ? year+'-01-01' : '';
   const dateend   = year ? year+'-12-31' : '';
-  const coLower = company.toLowerCase();
 
-  // First try searchbycompany endpoint
-  let useEndpoint = 'searchbycompany';
+  // Try searchbycompany first, fall back to searchbytitle
+  let endpoint = 'searchbycompany';
+  let paramKey = 'company';
   try {
     const testUrl = `${API}/searchbycompany?company=${encodeURIComponent(company)}&page=1`;
     const tr = await fetch(testUrl);
-    const td = await tr.json();
-    if (!tr.ok || td.error) useEndpoint = 'searchbytitle';
-  } catch(e) { useEndpoint = 'searchbytitle'; }
+    if (!tr.ok) { endpoint = 'searchbytitle'; paramKey = 'query'; }
+    else {
+      const td = await tr.json();
+      if (!td.records) { endpoint = 'searchbytitle'; paramKey = 'query'; }
+    }
+  } catch(e) { endpoint = 'searchbytitle'; paramKey = 'query'; }
 
   while (results.length < maxn) {
-    let url;
-    if (useEndpoint === 'searchbycompany') {
-      url = `${API}/searchbycompany?company=${encodeURIComponent(company)}&page=${page}`;
-    } else {
-      // Fallback: search by title keyword = company name, then filter by companies field
-      url = `${API}/searchbytitle?query=${encodeURIComponent(company)}&page=${page}`;
-    }
+    let url = `${API}/${endpoint}?${paramKey}=${encodeURIComponent(company)}&page=${page}`;
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
-
     const r = await fetch(url);
     if (!r.ok) break;
     const d = await r.json();
@@ -287,11 +285,6 @@ async function fetchPCCbyCompany(company, maxn, year, atype) {
     for (const rec of d.records) {
       if (results.length >= maxn) break;
       if (atype && rec.brief?.type !== atype) continue;
-
-      // For title-based fallback, also check if company appears in results
-      const namesStr = (rec.brief?.companies?.names || []).join(' ').toLowerCase();
-      if (useEndpoint === 'searchbytitle' && !namesStr.includes(coLower)) continue;
-
       const row = recToRow(rec, 'pcc');
       if (row) results.push(row);
     }
@@ -339,18 +332,25 @@ async function enrichAmounts(rows) {
       if (!target) continue;
       const det = target.detail || {};
 
-      // Use deep recursive search for all fields
+      // Log first record's detail structure for debugging
+      if (done === 1) console.log('Tender detail sample:', JSON.stringify(det).substring(0, 500));
+
+      // Deep recursive search
       row.預算金額 = deepFindKey(det, ['預算金額'], true);
       row.決標金額 = deepFindKey(det, ['決標金額','得標金額'], true);
       row.底價金額 = deepFindKey(det, ['底價金額','底價'], true);
       row.招標方式 = deepFindKey(det, ['招標方式'], false);
       row.決標方式 = deepFindKey(det, ['決標方式'], false);
 
+      // Also check brief for procurement_method
+      if (!row.招標方式) row.招標方式 = deepFindKey(target.brief||{}, ['招標方式','procurement_method'], false);
+      if (!row.決標方式) row.決標方式 = deepFindKey(target.brief||{}, ['決標方式','award_type'], false);
+
       if (!row.得標廠商) {
         const names = target.brief?.companies?.names || [];
         if (names.length) row.得標廠商 = names.join('、');
       }
-    } catch(e) {}
+    } catch(e) { console.warn('enrich error:', e); }
     await sleep(200);
     if (done % 5 === 0) renderTable(allData);
   }
@@ -537,8 +537,7 @@ function doSheet() {
   btn.disabled=false; btn.textContent='📊 Google Sheet';
 }
 
-document.getElementById('kw').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
-document.getElementById('co').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+// Enter key intentionally removed - use the button to search
 </script>
 </body>
 </html>
