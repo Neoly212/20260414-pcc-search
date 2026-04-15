@@ -258,8 +258,10 @@ function recToRow(rec, src) {
 async function fetchPCC(keyword, maxn, datebegin, dateend, atype) {
   const results = [];
   let page = 1;
+  const MAX_PAGES = 30; // prevent infinite pagination
+  let emptyFilterStreak = 0; // stop if many consecutive pages have no matching type
 
-  while (results.length < maxn) {
+  while (results.length < maxn && page <= MAX_PAGES) {
     let url = `${API}/searchbytitle?query=${encodeURIComponent(keyword)}&page=${page}`;
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
     const r = await fetchWithRetry(url);
@@ -267,14 +269,22 @@ async function fetchPCC(keyword, maxn, datebegin, dateend, atype) {
     const d = await r.json();
     if (!d.records?.length) break;
 
+    let addedThisPage = 0;
     for (const rec of d.records) {
       if (results.length >= maxn) break;
       if (atype && rec.brief?.type !== atype) continue;
       const row = recToRow(rec, 'pcc');
-      if (row) results.push(row);
+      if (row) { results.push(row); addedThisPage++; }
     }
+
+    // If 5 consecutive pages yield nothing, stop early
+    if (addedThisPage === 0) emptyFilterStreak++;
+    else emptyFilterStreak = 0;
+    if (emptyFilterStreak >= 5) break;
+
     if (page >= (d.total_pages||1)) break;
     page++;
+    try { setPg(`搜尋中... 第 ${page} 頁，已找到 ${results.length} 筆`); } catch(e){}
     await sleep(100);
   }
   return results;
@@ -298,7 +308,10 @@ async function fetchPCCbyCompany(company, maxn, datebegin, dateend, atype) {
     }
   } catch(e) { endpoint = 'searchbytitle'; paramKey = 'query'; }
 
-  while (results.length < maxn) {
+  const MAX_PAGES = 30;
+  let emptyFilterStreak = 0;
+
+  while (results.length < maxn && page <= MAX_PAGES) {
     let url = `${API}/${endpoint}?${paramKey}=${encodeURIComponent(company)}&page=${page}`;
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
     const r = await fetchWithRetry(url);
@@ -306,12 +319,18 @@ async function fetchPCCbyCompany(company, maxn, datebegin, dateend, atype) {
     const d = await r.json();
     if (!d.records?.length) break;
 
+    let addedThisPage = 0;
     for (const rec of d.records) {
       if (results.length >= maxn) break;
       if (atype && rec.brief?.type !== atype) continue;
       const row = recToRow(rec, 'pcc');
-      if (row) results.push(row);
+      if (row) { results.push(row); addedThisPage++; }
     }
+
+    if (addedThisPage === 0) emptyFilterStreak++;
+    else emptyFilterStreak = 0;
+    if (emptyFilterStreak >= 5) break;
+
     if (page >= (d.total_pages||1)) break;
     page++;
     await sleep(100);
@@ -507,7 +526,9 @@ async function run() {
       const tasks = [];
       if (activeSrc.has('pcc')) {
         const fn = isCompany ? fetchPCCbyCompany : fetchPCC;
-        tasks.push(fn(kw, maxn, datebegin, dateend, atype).catch(()=>[]));
+        // Wrap to show progress
+        const pccTask = fn(kw, maxn, datebegin, dateend, atype).catch(()=>[]);
+        tasks.push(pccTask);
       }
       if (!isCompany) {
         if (activeSrc.has('sinica')) tasks.push(fetchSinica(kw).catch(()=>[]));
