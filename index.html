@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -72,7 +71,6 @@ tr:hover td{background:#f8fbff}
   </div>
 
   <!-- Keyword search fields -->
-
   <div id="pane-kw">
     <div class="g2">
       <div><div class="lbl">關鍵字（多個用空格或逗號分隔）</div>
@@ -91,7 +89,6 @@ tr:hover td{background:#f8fbff}
   </div>
 
   <!-- Company search fields -->
-
   <div id="pane-co" style="display:none">
     <div class="g2">
       <div><div class="lbl">公司名稱（支援部分名稱模糊搜尋）</div>
@@ -110,7 +107,6 @@ tr:hover td{background:#f8fbff}
   </div>
 
   <!-- Common filters -->
-
   <div class="g3">
     <div><div class="lbl">標案狀態</div>
       <select id="atype">
@@ -162,7 +158,6 @@ tr:hover td{background:#f8fbff}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script>
 const API = 'https://pcc-api.openfun.app/api';
 
@@ -257,16 +252,33 @@ async function fetchPCC(keyword, maxn, year, atype) {
   return results;
 }
 
-// ── PCC: search by company ─────────────────────────────
+// ── PCC: search by company (filter from title search + companies field) ───
 async function fetchPCCbyCompany(company, maxn, year, atype) {
   const results = [];
   let page = 1;
   const datebegin = year ? year+'-01-01' : '';
   const dateend   = year ? year+'-12-31' : '';
+  const coLower = company.toLowerCase();
+
+  // First try searchbycompany endpoint
+  let useEndpoint = 'searchbycompany';
+  try {
+    const testUrl = `${API}/searchbycompany?company=${encodeURIComponent(company)}&page=1`;
+    const tr = await fetch(testUrl);
+    const td = await tr.json();
+    if (!tr.ok || td.error) useEndpoint = 'searchbytitle';
+  } catch(e) { useEndpoint = 'searchbytitle'; }
 
   while (results.length < maxn) {
-    let url = `${API}/searchbycompany?company=${encodeURIComponent(company)}&page=${page}`;
+    let url;
+    if (useEndpoint === 'searchbycompany') {
+      url = `${API}/searchbycompany?company=${encodeURIComponent(company)}&page=${page}`;
+    } else {
+      // Fallback: search by title keyword = company name, then filter by companies field
+      url = `${API}/searchbytitle?query=${encodeURIComponent(company)}&page=${page}`;
+    }
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
+
     const r = await fetch(url);
     if (!r.ok) break;
     const d = await r.json();
@@ -275,6 +287,11 @@ async function fetchPCCbyCompany(company, maxn, year, atype) {
     for (const rec of d.records) {
       if (results.length >= maxn) break;
       if (atype && rec.brief?.type !== atype) continue;
+
+      // For title-based fallback, also check if company appears in results
+      const namesStr = (rec.brief?.companies?.names || []).join(' ').toLowerCase();
+      if (useEndpoint === 'searchbytitle' && !namesStr.includes(coLower)) continue;
+
       const row = recToRow(rec, 'pcc');
       if (row) results.push(row);
     }
@@ -284,62 +301,59 @@ async function fetchPCCbyCompany(company, maxn, year, atype) {
   return results;
 }
 
+// ── Deep recursive field finder ────────────────────────
+// Recursively searches nested objects for a key containing any of the patterns
+function deepFindKey(obj, patterns, isAmt) {
+  if (!obj || typeof obj !== 'object') return '';
+  // Check direct keys first
+  for (const k of Object.keys(obj)) {
+    const match = patterns.some(p => k.includes(p));
+    if (match && obj[k] !== null && obj[k] !== undefined && obj[k] !== '') {
+      const v = String(obj[k]).trim();
+      if (isAmt) { const m = v.replace(/,/g,'').match(/\d{3,}/); if (m) return m[0]; }
+      else if (v.length > 0 && v.length < 50) return v;
+    }
+  }
+  // Then recurse into nested objects
+  for (const v of Object.values(obj)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      const found = deepFindKey(v, patterns, isAmt);
+      if (found) return found;
+    }
+  }
+  return '';
+}
+
 // ── Enrich amounts via tender API ──────────────────────
 async function enrichAmounts(rows) {
   const toEnrich = rows.filter(r => r.來源==='PCC' && r._tenderUrl);
   let done = 0;
   for (const row of toEnrich) {
-    setPg(`取得金額 ${++done}/${toEnrich.length}...`);
+    setPg(`取得詳細資料 ${++done}/${toEnrich.length}...`);
     try {
       const r = await fetch(row._tenderUrl);
       if (!r.ok) continue;
       const d = await r.json();
-      // The tender API may return multiple records (multiple dates for same job)
-      // Find the matching one (決標 type preferred)
       const recs = d.records || [];
       const target = recs.find(x=>x.brief?.type==='決標公告') || recs[0];
       if (!target) continue;
       const det = target.detail || {};
-      // Try to extract amounts - scan all keys
-      row.預算金額 = findAmt(det, ['預算金額','budget_amount','budget']);
-      row.決標金額 = findAmt(det, ['決標金額','award_price','final_price','得標金額']);
-      row.底價金額 = findAmt(det, ['底價金額','base_price','reserve_price','底價']);
-      row.招標方式 = findStr(det, ['招標方式','procurement_method']);
-      row.決標方式 = findStr(det, ['決標方式','award_type','決標類型']);
-      // Also update vendor if empty
+
+      // Use deep recursive search for all fields
+      row.預算金額 = deepFindKey(det, ['預算金額'], true);
+      row.決標金額 = deepFindKey(det, ['決標金額','得標金額'], true);
+      row.底價金額 = deepFindKey(det, ['底價金額','底價'], true);
+      row.招標方式 = deepFindKey(det, ['招標方式'], false);
+      row.決標方式 = deepFindKey(det, ['決標方式'], false);
+
       if (!row.得標廠商) {
         const names = target.brief?.companies?.names || [];
         if (names.length) row.得標廠商 = names.join('、');
       }
     } catch(e) {}
     await sleep(200);
-    // Re-render every 5 rows
     if (done % 5 === 0) renderTable(allData);
   }
-}
-
-function findAmt(obj, keys) {
-  for (const k of keys) {
-    if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') {
-      const m = String(obj[k]).replace(/,/g,'').match(/\d+/);
-      if (m) return m[0];
-    }
-  }
-  // Also scan all keys for amount-like values
-  for (const k of Object.keys(obj)) {
-    if (k.includes('金額') || k.includes('price') || k.includes('amount')) {
-      const m = String(obj[k]).replace(/,/g,'').match(/\d+/);
-      if (m && parseInt(m[0]) > 0) return m[0];
-    }
-  }
-  return '';
-}
-
-function findStr(obj, keys) {
-  for (const k of keys) {
-    if (obj[k]) return String(obj[k]).trim();
-  }
-  return '';
 }
 
 // ── Sinica ─────────────────────────────────────────────
@@ -526,6 +540,5 @@ function doSheet() {
 document.getElementById('kw').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
 document.getElementById('co').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
 </script>
-
 </body>
 </html>
