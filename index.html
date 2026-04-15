@@ -78,7 +78,8 @@ tr:hover td{background:#f8fbff}
       <div><div class="lbl">查詢年度</div>
         <select id="year">
           <option value="">全部年度</option>
-          <option value="2025" selected>2025年（民國114）</option>
+          <option value="2026" selected>2026年（民國115）</option>
+          <option value="2025">2025年（民國114）</option>
           <option value="2024">2024年（民國113）</option>
           <option value="2023">2023年（民國112）</option>
           <option value="2022">2022年（民國111）</option>
@@ -86,23 +87,51 @@ tr:hover td{background:#f8fbff}
         </select>
       </div>
     </div>
+    <div class="g2" style="margin-bottom:14px">
+      <div><div class="lbl">季度篩選（可選）</div>
+        <select id="quarter">
+          <option value="">全年（不限季度）</option>
+          <option value="Q1">Q1（1–3月）</option>
+          <option value="Q2">Q2（4–6月）</option>
+          <option value="Q3">Q3（7–9月）</option>
+          <option value="Q4">Q4（10–12月）</option>
+        </select>
+      </div>
+      <div></div>
+    </div>
   </div>
 
   <!-- Company search fields -->
   <div id="pane-co" style="display:none">
     <div class="g2">
-      <div><div class="lbl">公司名稱（支援部分名稱模糊搜尋）</div>
-        <input id="co" type="text" placeholder="例：上宸光學、卡爾蔡司、久和醫療"></div>
+      <div>
+        <div class="lbl">公司名稱（部分名稱即可）</div>
+        <input id="co" type="text" placeholder="例：上宸光學、卡爾蔡司、久和醫療">
+        <div style="font-size:11px;color:#999;margin-top:4px">⚠️ 公司搜尋會搜尋全文，可能需要稍長等待時間</div>
+      </div>
       <div><div class="lbl">查詢年度</div>
         <select id="year2">
           <option value="">全部年度</option>
-          <option value="2025" selected>2025年（民國114）</option>
+          <option value="2026" selected>2026年（民國115）</option>
+          <option value="2025">2025年（民國114）</option>
           <option value="2024">2024年（民國113）</option>
           <option value="2023">2023年（民國112）</option>
           <option value="2022">2022年（民國111）</option>
           <option value="2021">2021年（民國110）</option>
         </select>
       </div>
+    </div>
+    <div class="g2" style="margin-bottom:14px">
+      <div><div class="lbl">季度篩選（可選）</div>
+        <select id="quarter2">
+          <option value="">全年（不限季度）</option>
+          <option value="Q1">Q1（1–3月）</option>
+          <option value="Q2">Q2（4–6月）</option>
+          <option value="Q3">Q3（7–9月）</option>
+          <option value="Q4">Q4（10–12月）</option>
+        </select>
+      </div>
+      <div></div>
     </div>
   </div>
 
@@ -226,17 +255,15 @@ function recToRow(rec, src) {
 }
 
 // ── PCC: search by title ───────────────────────────────
-async function fetchPCC(keyword, maxn, year, atype) {
+async function fetchPCC(keyword, maxn, datebegin, dateend, atype) {
   const results = [];
   let page = 1;
-  const datebegin = year ? year+'-01-01' : '';
-  const dateend   = year ? year+'-12-31' : '';
 
   while (results.length < maxn) {
     let url = `${API}/searchbytitle?query=${encodeURIComponent(keyword)}&page=${page}`;
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
-    const r = await fetch(url);
-    if (!r.ok) break;
+    const r = await fetchWithRetry(url);
+    if (!r || !r.ok) break;
     const d = await r.json();
     if (!d.records?.length) break;
 
@@ -248,26 +275,23 @@ async function fetchPCC(keyword, maxn, year, atype) {
     }
     if (page >= (d.total_pages||1)) break;
     page++;
+    await sleep(100);
   }
   return results;
 }
 
 // ── PCC: search by company ─────────────────────────────
-// g0v API's searchbytitle does full-text search including company names,
-// so searching company name as keyword works directly.
-async function fetchPCCbyCompany(company, maxn, year, atype) {
+async function fetchPCCbyCompany(company, maxn, datebegin, dateend, atype) {
   const results = [];
   let page = 1;
-  const datebegin = year ? year+'-01-01' : '';
-  const dateend   = year ? year+'-12-31' : '';
 
   // Try searchbycompany first, fall back to searchbytitle
   let endpoint = 'searchbycompany';
   let paramKey = 'company';
   try {
     const testUrl = `${API}/searchbycompany?company=${encodeURIComponent(company)}&page=1`;
-    const tr = await fetch(testUrl);
-    if (!tr.ok) { endpoint = 'searchbytitle'; paramKey = 'query'; }
+    const tr = await fetchWithRetry(testUrl, 1);
+    if (!tr || !tr.ok) { endpoint = 'searchbytitle'; paramKey = 'query'; }
     else {
       const td = await tr.json();
       if (!td.records) { endpoint = 'searchbytitle'; paramKey = 'query'; }
@@ -277,8 +301,8 @@ async function fetchPCCbyCompany(company, maxn, year, atype) {
   while (results.length < maxn) {
     let url = `${API}/${endpoint}?${paramKey}=${encodeURIComponent(company)}&page=${page}`;
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
-    const r = await fetch(url);
-    if (!r.ok) break;
+    const r = await fetchWithRetry(url);
+    if (!r || !r.ok) break;
     const d = await r.json();
     if (!d.records?.length) break;
 
@@ -290,6 +314,7 @@ async function fetchPCCbyCompany(company, maxn, year, atype) {
     }
     if (page >= (d.total_pages||1)) break;
     page++;
+    await sleep(100);
   }
   return results;
 }
@@ -324,8 +349,8 @@ async function enrichAmounts(rows) {
   for (const row of toEnrich) {
     setPg(`取得詳細資料 ${++done}/${toEnrich.length}...`);
     try {
-      const r = await fetch(row._tenderUrl);
-      if (!r.ok) continue;
+      const r = await fetchWithRetry(row._tenderUrl, 2, 800);
+      if (!r || !r.ok) continue;
       const d = await r.json();
       const recs = d.records || [];
       const target = recs.find(x=>x.brief?.type==='決標公告') || recs[0];
@@ -351,7 +376,7 @@ async function enrichAmounts(rows) {
         if (names.length) row.得標廠商 = names.join('、');
       }
     } catch(e) { console.warn('enrich error:', e); }
-    await sleep(200);
+    await sleep(400);
     if (done % 5 === 0) renderTable(allData);
   }
 }
@@ -424,6 +449,34 @@ function formatDate(d) {
 }
 function cleanAmt(s) { const m=String(s).replace(/,/g,'').match(/\d+/); return m?m[0]:''; }
 
+// Convert year + quarter to date range
+function getDateRange(year, quarter) {
+  if (!year) return { datebegin: '', dateend: '' };
+  const qMap = { Q1:['01-01','03-31'], Q2:['04-01','06-30'], Q3:['07-01','09-30'], Q4:['10-01','12-31'] };
+  if (quarter && qMap[quarter]) {
+    return { datebegin: year+'-'+qMap[quarter][0], dateend: year+'-'+qMap[quarter][1] };
+  }
+  return { datebegin: year+'-01-01', dateend: year+'-12-31' };
+}
+
+// Fetch with retry
+async function fetchWithRetry(url, retries=2, delay=600) {
+  for (let i=0; i<=retries; i++) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) return r;
+      if (r.status === 429 || r.status >= 500) {
+        if (i < retries) await sleep(delay * (i+1));
+        continue;
+      }
+      return r;
+    } catch(e) {
+      if (i < retries) await sleep(delay * (i+1));
+      else throw e;
+    }
+  }
+}
+
 // ── Main ───────────────────────────────────────────────
 async function run() {
   const isCompany = activeTab === 'co';
@@ -439,10 +492,12 @@ async function run() {
   $('fi').style.display='none'; $('exBtn').style.display='none'; $('shBtn').style.display='none';
   $('cnt').textContent = '';
 
-  const year = isCompany ? $('year2').value : $('year').value;
-  const atype = $('atype').value;
-  const maxn = parseInt($('maxn').value);
+  const year    = isCompany ? $('year2').value : $('year').value;
+  const quarter = isCompany ? $('quarter2').value : $('quarter').value;
+  const atype   = $('atype').value;
+  const maxn    = parseInt($('maxn').value);
   const keywords = kwRaw.split(/[,，\s]+/).map(k=>k.trim()).filter(k=>k);
+  const { datebegin, dateend } = getDateRange(year, quarter);
 
   setSb('正在取得標案列表...','info');
 
@@ -452,7 +507,7 @@ async function run() {
       const tasks = [];
       if (activeSrc.has('pcc')) {
         const fn = isCompany ? fetchPCCbyCompany : fetchPCC;
-        tasks.push(fn(kw, maxn, year, atype).catch(()=>[]));
+        tasks.push(fn(kw, maxn, datebegin, dateend, atype).catch(()=>[]));
       }
       if (!isCompany) {
         if (activeSrc.has('sinica')) tasks.push(fetchSinica(kw).catch(()=>[]));
@@ -466,7 +521,7 @@ async function run() {
     // Try to enrich amounts
     const toEnrich = allData.filter(r=>r.來源==='PCC' && r._tenderUrl && r.公告類型==='決標公告');
     if (toEnrich.length > 0) {
-      setSb(`基本資料已載入 ${allData.length} 筆，嘗試取得金額（${toEnrich.length} 筆）...`,'info');
+      setSb(`基本資料已載入 ${allData.length} 筆，補充招標方式與金額（${toEnrich.length} 筆，請稍候）...`,'info');
       await enrichAmounts(allData);
     }
 
