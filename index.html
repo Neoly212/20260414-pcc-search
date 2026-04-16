@@ -132,8 +132,8 @@ tbody tr:hover td{background:var(--gray-50)}
   <div class="sidebar">
     <div class="sidebar-section">
         <div class="seg" id="searchModeSeg" style="margin-bottom:14px">
-          <button class="seg-btn active" data-v="title" onclick="setSeg('searchModeSeg',this);toggleSearchMode('title')">標案名稱</button>
-          <button class="seg-btn" data-v="company" onclick="setSeg('searchModeSeg',this);toggleSearchMode('company')">得標廠商</button>
+          <button class="seg-btn active" data-v="title" onclick="setSegAndToggle('searchModeSeg',this,'title')">標案名稱</button>
+          <button class="seg-btn" data-v="company" onclick="setSegAndToggle('searchModeSeg',this,'company')">得標廠商</button>
         </div>
 
       <div class="field" id="kwField">
@@ -302,6 +302,10 @@ function setSb(m,t){const b=$('sb');if(!m){b.style.display='none';b.className='s
 function setPg(m){$('pg').textContent=m||'';}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
+function setSegAndToggle(id, btn, mode) {
+  setSeg(id, btn);
+  toggleSearchMode(mode);
+}
 function toggleSearchMode(mode) {
   $('kwField').style.display = mode==='title' ? '' : 'none';
   $('coField').style.display = mode==='company' ? '' : 'none';
