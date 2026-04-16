@@ -147,6 +147,11 @@ tbody tr:hover td{background:var(--gray-50)}
         <input class="input" type="text" id="co" placeholder="正茂生物、卡爾蔡司、上宸光學">
         <div class="input-hint">輸入部分名稱即可，多個用空格或逗號分隔</div>
       </div>
+      <div class="field" id="coKwField" style="display:none">
+        <label class="label">標案名稱關鍵字 <span style="font-weight:400;text-transform:none;color:#bbb">（可選，雙重篩選）</span></label>
+        <input class="input" type="text" id="coKw" placeholder="例：顯微鏡、Bio-Rad">
+        <div class="input-hint">同時篩選廠商 + 標案名稱</div>
+      </div>
       <div class="field" id="orgField">
         <label class="label">機關名稱篩選 <span style="font-weight:400;text-transform:none;color:#bbb">（可選）</span></label>
         <input class="input" type="text" id="org" placeholder="台大、成大、中研院…">
@@ -226,6 +231,7 @@ tbody tr:hover td{background:var(--gray-50)}
     <div class="toolbar">
       <span class="toolbar-title">查詢結果</span>
       <span class="toolbar-count" id="cnt" style="display:none"></span>
+      <button class="btn-tool" id="stopBtn2" onclick="stopSearch()" style="display:none;border-color:#fca5a5;color:var(--red);background:#fef2f2">■ 中止</button>
       <div class="toolbar-right">
         <input class="filter-box" id="fi" placeholder="在結果中篩選…" oninput="doFilter()">
         <button class="btn-tool" id="exBtn" onclick="doExcel()">↓ Excel</button>
@@ -307,32 +313,53 @@ function setSegAndToggle(id, btn, mode) {
   toggleSearchMode(mode);
 }
 function toggleSearchMode(mode) {
-  $('kwField').style.display = mode==='title' ? '' : 'none';
-  $('coField').style.display = mode==='company' ? '' : 'none';
-  $('orgField').style.display = mode==='title' ? '' : 'none';
+  $('kwField').style.display    = mode==='title'   ? '' : 'none';
+  $('coField').style.display    = mode==='company' ? '' : 'none';
+  $('coKwField').style.display  = mode==='company' ? '' : 'none';
+  $('orgField').style.display   = mode==='title'   ? '' : 'none';
 }
 
 function getSearchMode(){ return getSegVal('searchModeSeg')||'title'; }
 
-async function fetchPCCbyCompany(company, maxn, datebegin, dateend) {
+// company: 廠商名稱, kwFilter: 額外關鍵字篩選(雙重搜尋), maxn, datebegin, dateend
+async function fetchPCCbyCompany(company, kwFilter, maxn, datebegin, dateend) {
   const results=[];
   let page=1;
-  const MAX_PAGES=50;
-  while(results.length<maxn && page<=MAX_PAGES){
+  const MAX_PAGES=100;
+  // Parse date range for client-side filtering
+  const dateFrom = datebegin ? parseInt(datebegin.replace(/-/g,'')) : 0;
+  const dateTo   = dateend   ? parseInt(dateend.replace(/-/g,''))   : 99999999;
+  const kwLower  = kwFilter ? kwFilter.toLowerCase() : '';
+  const atype    = getSegVal('atypeSeg');
+  const ttype    = getSegVal('ttypeSeg');
+
+  while(results.length < maxn && page <= MAX_PAGES){
     if(shouldStop) break;
-    let url=`${API}/searchbycompanyname?query=${encodeURIComponent(company)}&page=${page}`;
-    if(datebegin) url+=`&datebegin=${datebegin}&dateend=${dateend}`;
+    const url=`${API}/searchbycompanyname?query=${encodeURIComponent(company)}&page=${page}`;
     const r=await fetchWithRetry(url);
     if(!r||!r.ok) break;
     const d=await r.json();
     if(!d.records?.length) break;
+
     for(const rec of d.records){
       if(results.length>=maxn||shouldStop) break;
-      const atype=getSegVal('atypeSeg');
+
+      // Date filter (client-side since API may not support it)
+      const recDate = rec.date || 0;
+      if(dateFrom && recDate < dateFrom) continue;
+      if(dateTo   && recDate > dateTo)   { /* dates are sorted desc, could break early */ continue; }
+
+      // Type filters
       if(atype && rec.brief?.type!==atype) continue;
-      const ttype=getSegVal('ttypeSeg');
       const cat=rec.brief?.category||'';
-      if(ttype&&cat&&!cat.includes(ttype)) continue;
+      if(ttype && cat && !cat.includes(ttype)) continue;
+
+      // Keyword double-filter
+      if(kwLower){
+        const title=(rec.brief?.title||'').toLowerCase();
+        if(!title.includes(kwLower)) continue;
+      }
+
       const vendor=(rec.brief?.companies?.names||[]).join('、');
       const jobUrl='https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?querySentence='+encodeURIComponent(rec.job_number||'');
       results.push({
@@ -344,9 +371,10 @@ async function fetchPCCbyCompany(company, maxn, datebegin, dateend) {
         來源網址:jobUrl, _tenderUrl:rec.tender_api_url||''
       });
     }
+
     if(page>=(d.total_pages||1)) break;
     page++;
-    try{setPg(`得標廠商搜尋第 ${page} 頁，已找到 ${results.length} 筆…`);}catch(e){}
+    try{setPg(`廠商搜尋第 ${page} 頁，已找到 ${results.length} / ${maxn} 筆…`);}catch(e){}
     await sleep(150);
   }
   return results;
@@ -479,6 +507,7 @@ function stopSearch(){
   shouldStop=true;
   if(abortCtrl) abortCtrl.abort();
   $('stopBtn').style.display='none';
+  $('stopBtn2').style.display='none';
   $('runBtn').disabled=false; $('runBtn').textContent='查詢';
   setSb(`已中止，共取得 ${allData.length} 筆`,'warn');
   setPg('');
@@ -495,6 +524,7 @@ async function run(){
   const btn=$('runBtn');
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> 查詢中…';
   $('stopBtn').style.display='';
+  $('stopBtn2').style.display='';
   shouldStop=false; abortCtrl=new AbortController();
   allData=[]; filteredData=[];
   $('tw').innerHTML='<div class="empty"><div class="empty-icon">⏳</div><p>查詢中，請稍候…</p></div>';
@@ -517,7 +547,8 @@ async function run(){
       if(shouldStop) break;
       let batch;
       if(isCompany){
-        batch=await fetchPCCbyCompany(keyword,maxn,datebegin,dateend).catch(e=>e.message==='aborted'?[]:[] );
+        const kwFilter=$('coKw').value.trim();
+        batch=await fetchPCCbyCompany(keyword,kwFilter,maxn,datebegin,dateend).catch(e=>e.message==='aborted'?[]:[] );
       } else {
         batch=await fetchPCC(keyword,org,maxn,datebegin,dateend,getSegVal('atypeSeg')).catch(e=>e.message==='aborted'?[]:[] );
       }
@@ -539,6 +570,7 @@ async function run(){
   }catch(e){if(e.message!=='aborted') setSb('錯誤：'+e.message,'err');}
 
   $('stopBtn').style.display='none';
+  $('stopBtn2').style.display='none';
   btn.disabled=false; btn.textContent='查詢';
   shouldStop=false;
 }
