@@ -512,7 +512,7 @@ function stopSearch(){
   setSb(`已中止，共取得 ${allData.length} 筆`,'warn');
   setPg('');
   filteredData=[...allData]; renderTable(filteredData);
-  if(allData.length>0){$('fi').style.display='';$('exBtn').style.display='';$('shBtn').style.display='';}
+  if(allData.length>0){$('fi').style.display='inline-block';$('exBtn').style.display='inline-block';$('shBtn').style.display='inline-block';}
 }
 
 async function run(){
@@ -523,8 +523,8 @@ async function run(){
 
   const btn=$('runBtn');
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> 查詢中…';
-  $('stopBtn').style.display='';
-  $('stopBtn2').style.display='';
+  $('stopBtn').style.display='block';
+  $('stopBtn2').style.display='inline-block';
   shouldStop=false; abortCtrl=new AbortController();
   allData=[]; filteredData=[];
   $('tw').innerHTML='<div class="empty"><div class="empty-icon">⏳</div><p>查詢中，請稍候…</p></div>';
@@ -534,9 +534,12 @@ async function run(){
   const org=$('org').value.trim();
   const year=$('year').value;
   const quarter=$('quarter').value;
-  const maxn=quarter?9999:parseInt($('maxn').value);
+  const rawMaxn = parseInt($('maxn').value) || 50;
+  const maxn = quarter ? 9999 : rawMaxn;
   const keywords=inputVal.split(/[,，\s]+/).map(k=>k.trim()).filter(k=>k);
   const {datebegin,dateend}=getDateRange(year,quarter);
+
+  console.log('[查詢參數]', {mode:isCompany?'廠商':'標案', inputVal, year, quarter, maxn, datebegin, dateend});
 
   const modeLabel=isCompany?'得標廠商':'標案名稱';
   const orgExp=(!isCompany&&org)?` × 機關「${org}」`:'';
@@ -566,7 +569,7 @@ async function run(){
     renderTable(filteredData);
     setSb(`查詢完成，共 ${allData.length} 筆`,'ok');
     setPg('');
-    if(allData.length>0){$('fi').style.display='';$('exBtn').style.display='';$('shBtn').style.display='';}
+    if(allData.length>0){$('fi').style.display='inline-block';$('exBtn').style.display='inline-block';$('shBtn').style.display='inline-block';}
   }catch(e){if(e.message!=='aborted') setSb('錯誤：'+e.message,'err');}
 
   $('stopBtn').style.display='none';
