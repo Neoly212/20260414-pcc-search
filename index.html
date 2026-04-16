@@ -351,6 +351,8 @@ async function fetchPCCbyCompany(company, maxn, datebegin, dateend) {
   }
   return results;
 }
+
+function getDateRange(year,quarter){
   if(!year) return {datebegin:'',dateend:''};
   const qMap={Q1:['01-01','03-31'],Q2:['04-01','06-30'],Q3:['07-01','09-30'],Q4:['10-01','12-31']};
   if(quarter&&qMap[quarter]) return {datebegin:year+'-'+qMap[quarter][0],dateend:year+'-'+qMap[quarter][1]};
