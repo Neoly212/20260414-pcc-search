@@ -3,204 +3,250 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>政府採購查詢系統</title>
+<title>採購情報系統</title>
 <style>
+:root{
+  --navy:#0f2044;--blue:#2563eb;--blue-light:#eff6ff;--blue-mid:#dbeafe;
+  --green:#059669;--green-light:#ecfdf5;
+  --amber:#d97706;--red:#dc2626;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;
+  --gray-400:#9ca3af;--gray-500:#6b7280;--gray-700:#374151;--gray-900:#111827;
+  --radius:8px;--radius-sm:5px;
+  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Helvetica Neue',Arial,'PingFang TC','Microsoft JhengHei',sans-serif;background:#f5f6f8;color:#1a1a1a;font-size:14px;line-height:1.5}
-a{color:#2563eb;text-decoration:none}
-a:hover{text-decoration:underline}
+html{font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI','Noto Sans TC',sans-serif;background:#f0f2f5;color:var(--gray-900);line-height:1.55;min-height:100vh}
 
 /* Header */
-.site-header{background:#1e3a5f;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
-.site-header h1{font-size:15px;font-weight:600;letter-spacing:.02em}
-.site-header nav{display:flex;gap:20px;font-size:12px;opacity:.8}
+header{background:var(--navy);height:56px;display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.logo{color:#fff;font-size:15px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.logo-dot{width:8px;height:8px;background:var(--blue);border-radius:50%;box-shadow:0 0 0 3px rgba(37,99,235,.3)}
+.header-sub{color:#94a3b8;font-size:12px;margin-left:auto;display:flex;gap:16px}
+.header-sub span{cursor:default}
 
 /* Layout */
-.main{max-width:1280px;margin:20px auto;padding:0 16px;display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
+.app{display:flex;height:calc(100vh - 56px)}
+.sidebar{width:300px;background:#fff;border-right:1px solid var(--gray-200);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column}
+.content{flex:1;overflow-y:auto;padding:24px}
 
-/* Sidebar form */
-.sidebar{background:#fff;border:1px solid #e2e5ea;border-radius:6px}
-.sidebar-title{padding:12px 16px;border-bottom:1px solid #e2e5ea;font-size:13px;font-weight:600;color:#374151;background:#f9fafb;border-radius:6px 6px 0 0}
-.form-body{padding:16px}
+/* Sidebar */
+.sidebar-section{padding:20px 20px 0}
+.sidebar-section+.sidebar-section{border-top:1px solid var(--gray-100);margin-top:4px;padding-top:20px}
+.sidebar-footer{padding:16px 20px;margin-top:auto;border-top:1px solid var(--gray-100)}
 .field{margin-bottom:14px}
 .field:last-child{margin-bottom:0}
-.field label{display:block;font-size:12px;color:#6b7280;margin-bottom:4px;font-weight:500}
-input[type=text],select{width:100%;height:34px;padding:0 10px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;color:#1a1a1a;background:#fff}
-input[type=text]:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.1)}
-input[type=text]::placeholder{color:#9ca3af}
-.radio-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.radio-group label{display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;padding:3px 8px;border:1px solid #d1d5db;border-radius:3px;background:#fff;transition:.1s}
-.radio-group label:hover{border-color:#2563eb;background:#eff6ff}
-.radio-group input[type=radio]{width:12px;height:12px;accent-color:#2563eb}
-.radio-group input[type=radio]:checked + span{color:#2563eb;font-weight:500}
-.radio-group label:has(input:checked){border-color:#2563eb;background:#eff6ff}
-.checkbox-group{display:flex;flex-direction:column;gap:4px}
-.checkbox-group label{display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer}
-.checkbox-group input[type=checkbox]{width:13px;height:13px;accent-color:#2563eb}
-.divider{height:1px;background:#e2e5ea;margin:14px 0}
-.btn-search{width:100%;height:36px;background:#1e3a5f;color:#fff;border:none;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
-.btn-search:hover{background:#2d5a8e}
-.btn-search:disabled{background:#9ca3af;cursor:not-allowed}
-.btn-stop{width:100%;height:36px;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;margin-top:6px;display:none}
+.label{font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block}
+.input{width:100%;height:36px;padding:0 11px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-900);background:#fff;transition:.15s}
+.input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.input::placeholder{color:var(--gray-400)}
+.input-hint{font-size:11px;color:var(--gray-400);margin-top:4px;line-height:1.4}
+.input-hint.warn{color:#f59e0b}
+select.input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+
+/* Segment control */
+.seg{display:flex;background:var(--gray-100);border-radius:var(--radius-sm);padding:3px;gap:2px}
+.seg-btn{flex:1;height:28px;border:none;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;color:var(--gray-500);background:transparent;transition:.15s;white-space:nowrap}
+.seg-btn.active{background:#fff;color:var(--gray-900);box-shadow:var(--shadow)}
+
+/* Checkboxes */
+.check-list{display:flex;flex-direction:column;gap:6px}
+.check-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-700);cursor:pointer}
+.check-item input{width:15px;height:15px;accent-color:var(--blue);cursor:pointer}
+
+/* Buttons */
+.btn-primary{width:100%;height:40px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;letter-spacing:.01em}
+.btn-primary:hover{background:#1d4ed8}
+.btn-primary:disabled{background:var(--gray-300);cursor:not-allowed}
+.btn-stop{width:100%;height:36px;background:#fff;color:var(--red);border:1.5px solid #fca5a5;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;margin-top:8px;display:none;transition:.15s}
 .btn-stop:hover{background:#fef2f2}
-.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* Results pane */
-.results-pane{}
-.results-header{background:#fff;border:1px solid #e2e5ea;border-radius:6px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.results-title{font-size:13px;font-weight:600;color:#374151}
-.results-count{font-size:12px;color:#6b7280;margin-right:auto}
-.status-bar{font-size:12px;padding:8px 12px;border-radius:4px;border-left:3px solid}
-.status-bar.info{background:#eff6ff;border-color:#2563eb;color:#1d4ed8}
-.status-bar.ok{background:#f0fdf4;border-color:#16a34a;color:#15803d}
-.status-bar.warn{background:#fffbeb;border-color:#d97706;color:#92400e}
-.status-bar.err{background:#fef2f2;border-color:#dc2626;color:#991b1b}
-.prog{font-size:11px;color:#9ca3af;padding:4px 0 2px}
-.btn-sm{height:30px;padding:0 12px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;cursor:pointer;background:#fff;color:#374151;white-space:nowrap}
-.btn-sm:hover{background:#f9fafb}
-.btn-export-green{background:#fff;border-color:#16a34a;color:#15803d}
-.btn-export-green:hover{background:#f0fdf4}
-.filter-input{height:30px;padding:0 10px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;width:160px}
+/* Content toolbar */
+.toolbar{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.toolbar-title{font-size:14px;font-weight:600;color:var(--gray-900)}
+.toolbar-count{font-size:12px;color:var(--gray-500);background:var(--gray-100);padding:2px 8px;border-radius:20px}
+.toolbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.filter-box{height:32px;padding:0 10px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;color:var(--gray-900);width:180px;display:none}
+.filter-box:focus{outline:none;border-color:var(--blue)}
+.btn-tool{height:32px;padding:0 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;background:#fff;color:var(--gray-700);white-space:nowrap;display:none;transition:.15s}
+.btn-tool:hover{border-color:var(--gray-400);background:var(--gray-50)}
+.btn-tool.green{border-color:#a7f3d0;color:var(--green);background:var(--green-light)}
+.btn-tool.green:hover{background:#d1fae5}
+
+/* Status */
+.status-wrap{margin-bottom:12px}
+.status{display:none;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;border-left:3px solid}
+.status.info{display:flex;background:var(--blue-light);border-color:var(--blue);color:#1e40af}
+.status.ok{display:flex;background:var(--green-light);border-color:var(--green);color:#065f46}
+.status.warn{display:flex;background:#fffbeb;border-color:var(--amber);color:#78350f}
+.status.err{display:flex;background:#fef2f2;border-color:var(--red);color:#7f1d1d}
+.prog{font-size:12px;color:var(--gray-400);padding:4px 0 8px;min-height:24px}
 
 /* Table */
-.table-wrap{background:#fff;border:1px solid #e2e5ea;border-radius:6px;overflow:hidden}
+.table-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
 .table-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead th{background:#f9fafb;padding:9px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em}
-tbody td{padding:8px 10px;border-bottom:1px solid #f3f4f6;vertical-align:top;color:#374151}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{padding:10px 12px;text-align:left;white-space:nowrap;border-bottom:1.5px solid var(--gray-200);color:var(--gray-500);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;background:var(--gray-50)}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top;color:var(--gray-700)}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:#f9fafb}
-.td-name{max-width:200px;word-break:break-word}
-.td-amt{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;color:#1a1a1a;font-weight:500}
-.badge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:11px;font-weight:500;white-space:nowrap}
-.badge-award{background:#dcfce7;color:#15803d}
-.badge-tender{background:#dbeafe;color:#1d4ed8}
-.badge-fail{background:#fef9c3;color:#92400e}
-.badge-other{background:#f3f4f6;color:#6b7280}
-.empty-state{padding:48px;text-align:center;color:#9ca3af;font-size:13px}
+tbody tr:hover td{background:var(--gray-50)}
+.td-title{max-width:220px;word-break:break-word;color:var(--gray-900)}
+.td-amt{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500;color:var(--gray-900)}
+.td-org{max-width:140px;word-break:break-word}
 
-@media(max-width:768px){.main{grid-template-columns:1fr}.sidebar{}}
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.b-award{background:#dcfce7;color:#15803d}
+.b-tender{background:var(--blue-mid);color:#1e40af}
+.b-fail{background:#fef3c7;color:#92400e}
+.b-other{background:var(--gray-100);color:var(--gray-500)}
+
+/* Source tag */
+.src-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:var(--gray-100);color:var(--gray-500)}
+.src-pcc{background:#e0e7ff;color:#3730a3}
+.src-sinica{background:#fce7f3;color:#9d174d}
+.src-nhri{background:#d1fae5;color:#065f46}
+
+/* Empty */
+.empty{padding:60px 20px;text-align:center;color:var(--gray-400)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty p{font-size:14px}
+.empty small{font-size:12px;color:var(--gray-300);margin-top:4px;display:block}
+
+/* CORS notice */
+.cors-notice{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:#78350f;margin-top:8px;line-height:1.6}
+.cors-notice strong{display:block;margin-bottom:4px}
+.cors-notice a{color:#b45309;font-weight:600}
 </style>
 </head>
 <body>
 
-<div class="site-header">
-  <h1>政府採購查詢系統</h1>
-  <nav><span>PCC</span><span>中研院</span><span>國衛院</span></nav>
-</div>
+<header>
+  <div class="logo"><div class="logo-dot"></div>採購情報系統</div>
+  <div class="header-sub"><span>PCC 政府採購網</span><span>中研院</span><span>國衛院</span></div>
+</header>
 
-<div class="main">
+<div class="app">
   <!-- Sidebar -->
   <div class="sidebar">
-    <div class="sidebar-title">查詢條件</div>
-    <div class="form-body">
-
+    <div class="sidebar-section">
       <div class="field">
-        <label>標案名稱關鍵字</label>
-        <input type="text" id="kw" placeholder="例：顯微鏡、Bio-Rad、離心機">
-        <div style="font-size:11px;color:#9ca3af;margin-top:3px">多個關鍵字以空格或逗號分隔</div>
+        <label class="label">標案名稱關鍵字</label>
+        <input class="input" type="text" id="kw" placeholder="顯微鏡、Bio-Rad、離心機">
+        <div class="input-hint">多個關鍵字以空格或逗號分隔</div>
       </div>
-
       <div class="field">
-        <label>機關名稱篩選（可留空）</label>
-        <input type="text" id="org" placeholder="例：台大、成大、中研院">
-        <div style="font-size:11px;color:#9ca3af;margin-top:3px">輸入部分名稱即可，會與關鍵字同時篩選</div>
+        <label class="label">機關名稱篩選 <span style="font-weight:400;text-transform:none;color:#bbb">（可選）</span></label>
+        <input class="input" type="text" id="org" placeholder="台大、成大、中研院…">
+        <div class="input-hint">支援縮寫，如「台大」→ 臺灣大學，「成大」→ 成功大學</div>
       </div>
+    </div>
 
-      <div class="divider"></div>
-
+    <div class="sidebar-section">
       <div class="field">
-        <label>查詢年度</label>
-        <select id="year">
+        <label class="label">查詢年度</label>
+        <select class="input" id="year">
           <option value="">全部年度</option>
-          <option value="2026" selected>2026年（民國115）</option>
-          <option value="2025">2025年（民國114）</option>
-          <option value="2024">2024年（民國113）</option>
-          <option value="2023">2023年（民國112）</option>
-          <option value="2022">2022年（民國111）</option>
-          <option value="2021">2021年（民國110）</option>
+          <option value="2026" selected>2026（民國 115）</option>
+          <option value="2025">2025（民國 114）</option>
+          <option value="2024">2024（民國 113）</option>
+          <option value="2023">2023（民國 112）</option>
+          <option value="2022">2022（民國 111）</option>
+          <option value="2021">2021（民國 110）</option>
         </select>
       </div>
-
       <div class="field">
-        <label>季度篩選</label>
-        <select id="quarter">
-          <option value="">全年（不限季度）</option>
+        <label class="label">季度 <span style="font-weight:400;text-transform:none;color:#bbb">（選季度時自動抓全部）</span></label>
+        <select class="input" id="quarter">
+          <option value="">不限季度</option>
           <option value="Q1">Q1（1–3月）</option>
           <option value="Q2">Q2（4–6月）</option>
           <option value="Q3">Q3（7–9月）</option>
           <option value="Q4">Q4（10–12月）</option>
         </select>
-        <div style="font-size:11px;color:#9ca3af;margin-top:3px">選擇季度時自動擷取全部符合筆數</div>
       </div>
+    </div>
 
-      <div class="divider"></div>
-
+    <div class="sidebar-section">
       <div class="field">
-        <label>標案狀態</label>
-        <div class="radio-group" id="atypeGroup">
-          <label><input type="radio" name="atype" value="決標公告" checked><span>決標</span></label>
-          <label><input type="radio" name="atype" value="招標公告"><span>招標</span></label>
-          <label><input type="radio" name="atype" value="無法決標公告"><span>無法決標</span></label>
-          <label><input type="radio" name="atype" value=""><span>全部</span></label>
+        <label class="label">標案狀態</label>
+        <div class="seg" id="atypeSeg">
+          <button class="seg-btn active" data-v="決標公告" onclick="setSeg('atypeSeg',this)">決標</button>
+          <button class="seg-btn" data-v="招標公告" onclick="setSeg('atypeSeg',this)">招標</button>
+          <button class="seg-btn" data-v="無法決標公告" onclick="setSeg('atypeSeg',this)">無法決標</button>
+          <button class="seg-btn" data-v="" onclick="setSeg('atypeSeg',this)">全部</button>
         </div>
       </div>
-
       <div class="field">
-        <label>標案種類</label>
-        <div class="radio-group" id="typeGroup">
-          <label><input type="radio" name="ttype" value="" checked><span>不限</span></label>
-          <label><input type="radio" name="ttype" value="財物"><span>財物</span></label>
-          <label><input type="radio" name="ttype" value="工程"><span>工程</span></label>
-          <label><input type="radio" name="ttype" value="勞務"><span>勞務</span></label>
+        <label class="label">標案種類</label>
+        <div class="seg" id="ttypeSeg">
+          <button class="seg-btn active" data-v="" onclick="setSeg('ttypeSeg',this)">不限</button>
+          <button class="seg-btn" data-v="財物" onclick="setSeg('ttypeSeg',this)">財物</button>
+          <button class="seg-btn" data-v="工程" onclick="setSeg('ttypeSeg',this)">工程</button>
+          <button class="seg-btn" data-v="勞務" onclick="setSeg('ttypeSeg',this)">勞務</button>
         </div>
       </div>
-
       <div class="field">
-        <label>最多筆數</label>
-        <select id="maxn">
-          <option value="20">20筆</option>
-          <option value="50" selected>50筆</option>
-          <option value="100">100筆</option>
-          <option value="200">200筆</option>
+        <label class="label">最多筆數</label>
+        <select class="input" id="maxn">
+          <option value="20">20 筆</option>
+          <option value="50" selected>50 筆</option>
+          <option value="100">100 筆</option>
+          <option value="200">200 筆</option>
           <option value="9999">不限（最慢）</option>
         </select>
       </div>
+    </div>
 
-      <div class="divider"></div>
-
-      <div class="field">
-        <label>查詢來源</label>
-        <div class="checkbox-group">
-          <label><input type="checkbox" id="src-pcc" checked><span>政府採購網 PCC</span></label>
-          <label><input type="checkbox" id="src-sinica" checked><span>中研院科研採購</span></label>
-          <label><input type="checkbox" id="src-nhri" checked><span>國衛院採購</span></label>
-        </div>
+    <div class="sidebar-section">
+      <label class="label">查詢來源</label>
+      <div class="check-list">
+        <label class="check-item"><input type="checkbox" id="src-pcc" checked><span>政府採購網 PCC</span></label>
+        <label class="check-item"><input type="checkbox" id="src-sinica" checked><span>中研院科研採購</span></label>
+        <label class="check-item"><input type="checkbox" id="src-nhri" checked><span>國衛院採購</span></label>
       </div>
+      <div class="cors-notice">
+        <strong>⚠️ 中研院 / 國衛院說明</strong>
+        因跨域限制，這兩個來源的資料需透過代理取得，速度較慢或偶有失敗。
+        若查不到可直接前往：
+        <a href="https://srp.sinica.edu.tw/InviteBids/AwardIndex" target="_blank">中研院採購網</a> ·
+        <a href="https://supplier.nhri.edu.tw/PUR/share/master" target="_blank">國衛院採購網</a>
+      </div>
+    </div>
 
-      <div class="divider"></div>
-
-      <button class="btn-search" id="runBtn" onclick="run()">查詢</button>
+    <div class="sidebar-footer">
+      <button class="btn-primary" id="runBtn" onclick="run()">查詢</button>
       <button class="btn-stop" id="stopBtn" onclick="stopSearch()">■ 中止查詢</button>
-
     </div>
   </div>
 
-  <!-- Results -->
-  <div class="results-pane">
-    <div class="results-header">
-      <span class="results-title">查詢結果</span>
-      <span class="results-count" id="cnt"></span>
-      <input class="filter-input" id="fi" placeholder="在結果中篩選..." oninput="doFilter()" style="display:none">
-      <button class="btn-sm" id="exBtn" onclick="doExcel()" style="display:none">↓ Excel</button>
-      <button class="btn-sm btn-export-green" id="shBtn" onclick="doSheet()" style="display:none">📊 Google Sheet</button>
+  <!-- Content -->
+  <div class="content">
+    <div class="toolbar">
+      <span class="toolbar-title">查詢結果</span>
+      <span class="toolbar-count" id="cnt" style="display:none"></span>
+      <div class="toolbar-right">
+        <input class="filter-box" id="fi" placeholder="在結果中篩選…" oninput="doFilter()">
+        <button class="btn-tool" id="exBtn" onclick="doExcel()">↓ Excel</button>
+        <button class="btn-tool green" id="shBtn" onclick="doSheet()">📊 Google Sheet</button>
+      </div>
     </div>
-    <div id="sb" style="display:none;margin-bottom:8px"></div>
-    <div class="prog" id="pg"></div>
-    <div class="table-wrap">
+
+    <div class="status-wrap">
+      <div class="status" id="sb"></div>
+      <div class="prog" id="pg"></div>
+    </div>
+
+    <div class="table-card">
       <div class="table-scroll" id="tw">
-        <div class="empty-state">請輸入關鍵字後按「查詢」</div>
+        <div class="empty">
+          <div class="empty-icon">🔍</div>
+          <p>輸入關鍵字後按「查詢」</p>
+          <small>支援多關鍵字 + 機關名稱雙重篩選</small>
+        </div>
       </div>
     </div>
   </div>
@@ -209,197 +255,218 @@ tbody tr:hover td{background:#f9fafb}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 const API = 'https://pcc-api.openfun.app/api';
-let allData = [], filteredData = [];
-let shouldStop = false, abortCtrl = null;
+let allData=[], filteredData=[];
+let shouldStop=false, abortCtrl=null;
+
+// Org abbreviation map for fuzzy matching
+const ORG_ALIASES = {
+  '台大':'臺灣大學','臺大':'臺灣大學',
+  '成大':'成功大學','中山':'中山大學',
+  '清大':'清華大學','交大':'陽明交通大學',
+  '政大':'政治大學','師大':'師範大學',
+  '北大':'臺北大學','中央':'中央大學',
+  '中興':'中興大學','東華':'東華大學',
+  '高醫':'高雄醫學大學','北醫':'臺北醫學大學',
+  '陽明':'陽明大學','輔大':'輔仁大學',
+  '東吳':'東吳大學','淡江':'淡江大學',
+  '中研院':'中央研究院','國衛院':'國家衛生研究院',
+  '台大醫院':'臺灣大學醫學院附設醫院',
+  '榮總':'榮民總醫院','三總':'三軍總醫院',
+  '台北榮總':'臺北榮民總醫院','高雄榮總':'高雄榮民總醫院',
+  '科技部':'科技部','國科會':'國家科學及技術委員會',
+  '衛福部':'衛生福利部','教育部':'教育部',
+  '農委會':'農業委員會','農業部':'農業部',
+};
+
+function expandOrg(input) {
+  if (!input) return '';
+  // Return the alias expansion OR the original input
+  return ORG_ALIASES[input] || input;
+}
+
+function orgMatch(unitName, orgInput) {
+  if (!orgInput) return true;
+  const u = unitName.toLowerCase();
+  const expanded = expandOrg(orgInput).toLowerCase();
+  const original = orgInput.toLowerCase();
+  return u.includes(expanded) || u.includes(original);
+}
 
 const $ = id => document.getElementById(id);
-function getAtype(){ return document.querySelector('input[name=atype]:checked')?.value || ''; }
-function getTtype(){ return document.querySelector('input[name=ttype]:checked')?.value || ''; }
+function getSegVal(id){ return document.querySelector(`#${id} .seg-btn.active`)?.dataset.v||''; }
+function setSeg(id, btn){
+  document.querySelectorAll(`#${id} .seg-btn`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
 function activeSrcs(){ return ['pcc','sinica','nhri'].filter(s=>$('src-'+s).checked); }
 
-function setSb(m, t) {
-  const b=$('sb');
-  b.style.display = m ? '' : 'none';
-  if (m) { b.className='status-bar '+t; b.textContent=m; }
-}
-function setPg(m){ $('pg').textContent = m||''; }
+function setSb(m,t){const b=$('sb');if(!m){b.style.display='none';b.className='status';return;}b.className='status '+t;b.textContent=m;}
+function setPg(m){$('pg').textContent=m||'';}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-function getDateRange(year, quarter) {
-  if (!year) return { datebegin:'', dateend:'' };
+function getDateRange(year,quarter){
+  if(!year) return {datebegin:'',dateend:''};
   const qMap={Q1:['01-01','03-31'],Q2:['04-01','06-30'],Q3:['07-01','09-30'],Q4:['10-01','12-31']};
-  if (quarter && qMap[quarter]) return { datebegin:year+'-'+qMap[quarter][0], dateend:year+'-'+qMap[quarter][1] };
-  return { datebegin:year+'-01-01', dateend:year+'-12-31' };
+  if(quarter&&qMap[quarter]) return {datebegin:year+'-'+qMap[quarter][0],dateend:year+'-'+qMap[quarter][1]};
+  return {datebegin:year+'-01-01',dateend:year+'-12-31'};
 }
 
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-async function fetchWithRetry(url, retries=2, delay=600) {
-  for (let i=0; i<=retries; i++) {
-    if (shouldStop) throw new Error('aborted');
-    try {
-      const signal = abortCtrl?.signal;
-      const r = await fetch(url, { signal });
-      if (r.ok) return r;
-      if (r.status===429 || r.status>=500) { if(i<retries) await sleep(delay*(i+1)); continue; }
+async function fetchWithRetry(url,retries=2,delay=700){
+  for(let i=0;i<=retries;i++){
+    if(shouldStop) throw new Error('aborted');
+    try{
+      const r=await fetch(url,{signal:abortCtrl?.signal});
+      if(r.ok) return r;
+      if(r.status===429||r.status>=500){if(i<retries)await sleep(delay*(i+1));continue;}
       return r;
-    } catch(e) {
-      if (e.name==='AbortError' || shouldStop) throw new Error('aborted');
-      if (i<retries) await sleep(delay*(i+1)); else throw e;
+    }catch(e){
+      if(e.name==='AbortError'||shouldStop) throw new Error('aborted');
+      if(i<retries) await sleep(delay*(i+1)); else throw e;
     }
   }
 }
 
-function badgeHtml(type) {
-  const m={'決標公告':'badge-award','招標公告':'badge-tender','無法決標公告':'badge-fail'};
+function badgeHtml(type){
+  const m={'決標公告':'b-award','招標公告':'b-tender','無法決標公告':'b-fail'};
   const l={'決標公告':'決標','招標公告':'招標','無法決標公告':'無法決標'};
-  return `<span class="badge ${m[type]||'badge-other'}">${l[type]||type||''}</span>`;
+  return `<span class="badge ${m[type]||'b-other'}">${l[type]||type||'—'}</span>`;
+}
+function srcTag(src){
+  const m={'pcc':'src-pcc','sinica':'src-sinica','nhri':'src-nhri'};
+  return `<span class="src-tag ${m[src]||''}">${src.toUpperCase()}</span>`;
 }
 
-function recToRow(rec, src) {
-  const type = rec.brief?.type || '';
-  const cat  = rec.brief?.category || '';
-  const ttype = getTtype();
-  if (ttype && cat && !cat.includes(ttype)) return null;
-  const vendor = (rec.brief?.companies?.names||[]).join('、');
-  const jobUrl = 'https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?querySentence=' + encodeURIComponent(rec.job_number||'');
-  return {
-    來源: src==='pcc'?'PCC':src==='sinica'?'中研院':'國衛院',
-    公告類型: type,
-    機關名稱: rec.unit_name||'',
-    標案案號: rec.job_number||'',
-    標案名稱: rec.brief?.title||'',
-    招標方式:'', 決標方式:'',
-    預算金額:'', 決標金額:'', 底價金額:'',
-    得標廠商: vendor,
-    決標日期: fmtDate(rec.date),
-    來源網址: jobUrl,
-    _tenderUrl: rec.tender_api_url||''
+function recToRow(rec, src, orgInput){
+  const type=rec.brief?.type||'';
+  const cat=rec.brief?.category||'';
+  const ttype=getSegVal('ttypeSeg');
+  if(ttype&&cat&&!cat.includes(ttype)) return null;
+  if(!orgMatch(rec.unit_name||'',orgInput)) return null;
+  const vendor=(rec.brief?.companies?.names||[]).join('、');
+  const jobUrl='https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?querySentence='+encodeURIComponent(rec.job_number||'');
+  return{
+    _src:src, 公告類型:type, 機關名稱:rec.unit_name||'',
+    標案案號:rec.job_number||'', 標案名稱:rec.brief?.title||'',
+    招標方式:'', 決標方式:'', 預算金額:'', 決標金額:'', 底價金額:'',
+    得標廠商:vendor, 決標日期:fmtDate(rec.date),
+    來源網址:jobUrl, _tenderUrl:rec.tender_api_url||''
   };
 }
 
-function fmtDate(d) {
-  if (!d) return ''; const s=String(d);
-  return s.length===8 ? s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8) : s;
-}
-function cleanAmt(s){ const m=String(s).replace(/,/g,'').match(/\d+/); return m?m[0]:''; }
+function fmtDate(d){if(!d)return'';const s=String(d);return s.length===8?s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8):s;}
+function cleanAmt(s){const m=String(s).replace(/,/g,'').match(/\d+/);return m?m[0]:'';}
 
-async function fetchPCC(keyword, orgFilter, maxn, datebegin, dateend, atype) {
-  const results=[];
-  let page=1;
-  const MAX_PAGES = atype ? 50 : 30;
-  const orgLower = orgFilter ? orgFilter.toLowerCase() : '';
-
-  while (results.length < maxn && page <= MAX_PAGES) {
-    if (shouldStop) break;
-    let url = `${API}/searchbytitle?query=${encodeURIComponent(keyword)}&page=${page}`;
-    if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
-    const r = await fetchWithRetry(url);
-    if (!r||!r.ok) break;
-    const d = await r.json();
-    if (!d.records?.length) break;
-
-    for (const rec of d.records) {
-      if (results.length>=maxn || shouldStop) break;
-      if (atype && rec.brief?.type!==atype) continue;
-      // org filter
-      if (orgLower && !(rec.unit_name||'').toLowerCase().includes(orgLower)) continue;
-      const row = recToRow(rec, 'pcc');
-      if (row) results.push(row);
+async function fetchPCC(keyword,orgInput,maxn,datebegin,dateend,atype){
+  const results=[];let page=1;
+  const MAX_PAGES=atype?60:35;
+  while(results.length<maxn&&page<=MAX_PAGES){
+    if(shouldStop) break;
+    let url=`${API}/searchbytitle?query=${encodeURIComponent(keyword)}&page=${page}`;
+    if(datebegin) url+=`&datebegin=${datebegin}&dateend=${dateend}`;
+    const r=await fetchWithRetry(url);
+    if(!r||!r.ok) break;
+    const d=await r.json();
+    if(!d.records?.length) break;
+    for(const rec of d.records){
+      if(results.length>=maxn||shouldStop) break;
+      if(atype&&rec.brief?.type!==atype) continue;
+      const row=recToRow(rec,'pcc',orgInput);
+      if(row) results.push(row);
     }
-
-    if (page>=(d.total_pages||1)) break;
+    if(page>=(d.total_pages||1)) break;
     page++;
-    try { setPg(`搜尋中... 第 ${page} 頁，已找到 ${results.length} 筆`); } catch(e){}
+    try{setPg(`搜尋第 ${page} 頁，已找到 ${results.length} 筆…`);}catch(e){}
     await sleep(150);
   }
   return results;
 }
 
-async function fetchSinica(keyword, orgFilter) {
+// Use allorigins CORS proxy for sinica/nhri
+async function fetchViaProxy(url){
+  const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  const r=await fetch(proxy,{signal:abortCtrl?.signal});
+  if(!r.ok) throw new Error('proxy failed');
+  return r.text();
+}
+
+async function fetchSinica(keyword,orgInput){
   const results=[];
-  const orgLower = orgFilter ? orgFilter.toLowerCase() : '';
-  try {
+  try{
     const url=`https://srp.sinica.edu.tw/InviteBids/AwardIndex?keyword=${encodeURIComponent(keyword)}`;
-    const r=await fetch(url);
-    if(!r.ok) return results;
-    const html=await r.text();
+    let html;
+    try{ const r=await fetch(url,{signal:abortCtrl?.signal}); if(r.ok) html=await r.text(); }
+    catch(e){ html=await fetchViaProxy(url); }
+    if(!html) return results;
     const doc=new DOMParser().parseFromString(html,'text/html');
     doc.querySelectorAll('table tbody tr').forEach(tr=>{
       const tds=tr.querySelectorAll('td');
       if(tds.length<4) return;
-      const unitName=tds[1]?.innerText?.trim()||'中央研究院';
-      if(orgLower && !unitName.toLowerCase().includes(orgLower) && !'中央研究院'.includes(orgLower)) return;
+      if(orgInput&&!orgMatch('中央研究院',orgInput)) return;
       const link=tr.querySelector('a');
       results.push({
-        來源:'中研院', 公告類型:'決標公告',
-        機關名稱:'中央研究院', 標案案號:tds[0]?.innerText?.trim()||'',
-        標案名稱:tds[2]?.innerText?.trim()||'',
+        _src:'sinica', 公告類型:'決標公告', 機關名稱:'中央研究院',
+        標案案號:tds[0]?.innerText?.trim()||'', 標案名稱:tds[2]?.innerText?.trim()||'',
         招標方式:'', 決標方式:'', 預算金額:'',
         決標金額:cleanAmt(tds[4]?.innerText||''), 底價金額:'',
-        得標廠商:tds[5]?.innerText?.trim()||'',
-        決標日期:tds[3]?.innerText?.trim()||'',
+        得標廠商:tds[5]?.innerText?.trim()||'', 決標日期:tds[3]?.innerText?.trim()||'',
         來源網址:link?'https://srp.sinica.edu.tw'+link.getAttribute('href'):'',
         _tenderUrl:''
       });
     });
-  } catch(e){}
+  }catch(e){ console.warn('Sinica error:',e); }
   return results;
 }
 
-async function fetchNHRI(keyword, orgFilter) {
+async function fetchNHRI(keyword,orgInput){
   const results=[];
-  if (orgFilter && !'國家衛生研究院'.includes(orgFilter)) return results;
-  try {
+  if(orgInput&&!orgMatch('國家衛生研究院',orgInput)) return results;
+  try{
     const url=`https://supplier.nhri.edu.tw/PUR/share/master?keyword=${encodeURIComponent(keyword)}`;
-    const r=await fetch(url);
-    if(!r.ok) return results;
-    const html=await r.text();
+    let html;
+    try{ const r=await fetch(url,{signal:abortCtrl?.signal}); if(r.ok) html=await r.text(); }
+    catch(e){ html=await fetchViaProxy(url); }
+    if(!html) return results;
     const doc=new DOMParser().parseFromString(html,'text/html');
     doc.querySelectorAll('table tbody tr').forEach(tr=>{
       const tds=tr.querySelectorAll('td');
       if(tds.length<3) return;
       const link=tr.querySelector('a');
       results.push({
-        來源:'國衛院', 公告類型:'決標公告',
-        機關名稱:'國家衛生研究院', 標案案號:tds[0]?.innerText?.trim()||'',
-        標案名稱:tds[1]?.innerText?.trim()||'',
+        _src:'nhri', 公告類型:'決標公告', 機關名稱:'國家衛生研究院',
+        標案案號:tds[0]?.innerText?.trim()||'', 標案名稱:tds[1]?.innerText?.trim()||'',
         招標方式:'', 決標方式:'', 預算金額:'',
         決標金額:cleanAmt(tds[3]?.innerText||''), 底價金額:'',
-        得標廠商:tds[4]?.innerText?.trim()||'',
-        決標日期:tds[2]?.innerText?.trim()||'',
+        得標廠商:tds[4]?.innerText?.trim()||'', 決標日期:tds[2]?.innerText?.trim()||'',
         來源網址:link?'https://supplier.nhri.edu.tw'+link.getAttribute('href'):'',
         _tenderUrl:''
       });
     });
-  } catch(e){}
+  }catch(e){ console.warn('NHRI error:',e); }
   return results;
 }
 
-// Deep field search for enrichment
-function deepFind(obj, patterns, isAmt) {
-  if (!obj||typeof obj!=='object') return '';
-  for (const k of Object.keys(obj)) {
-    if (patterns.some(p=>k.includes(p)) && obj[k]!=null && obj[k]!=='') {
+function deepFind(obj,patterns,isAmt){
+  if(!obj||typeof obj!=='object') return '';
+  for(const k of Object.keys(obj)){
+    if(patterns.some(p=>k.includes(p))&&obj[k]!=null&&obj[k]!==''){
       const v=String(obj[k]).trim();
-      if (isAmt){const m=v.replace(/,/g,'').match(/\d{3,}/);if(m)return m[0];}
+      if(isAmt){const m=v.replace(/,/g,'').match(/\d{3,}/);if(m)return m[0];}
       else if(v.length>0&&v.length<60) return v;
     }
   }
-  for (const v of Object.values(obj)) {
-    if(v&&typeof v==='object'&&!Array.isArray(v)){
-      const f=deepFind(v,patterns,isAmt); if(f) return f;
-    }
+  for(const v of Object.values(obj)){
+    if(v&&typeof v==='object'&&!Array.isArray(v)){const f=deepFind(v,patterns,isAmt);if(f)return f;}
   }
   return '';
 }
 
-async function enrichAmounts(rows) {
-  const toEnrich=rows.filter(r=>r.來源==='PCC'&&r._tenderUrl&&r.公告類型==='決標公告');
+async function enrichAmounts(rows){
+  const toEnrich=rows.filter(r=>r._src==='pcc'&&r._tenderUrl&&r.公告類型==='決標公告');
   let done=0;
-  for (const row of toEnrich) {
-    if (shouldStop) break;
-    setPg(`補充詳細資料 ${++done}/${toEnrich.length}...`);
-    try {
+  for(const row of toEnrich){
+    if(shouldStop) break;
+    setPg(`補充詳細資料 ${++done}/${toEnrich.length}…`);
+    try{
       const r=await fetchWithRetry(row._tenderUrl,2,800);
       if(!r||!r.ok) continue;
       const d=await r.json();
@@ -412,58 +479,53 @@ async function enrichAmounts(rows) {
       row.底價金額=deepFind(det,['底價金額','底價'],true);
       row.招標方式=deepFind(det,['招標方式'],false)||deepFind(target.brief||{},['招標方式'],false);
       row.決標方式=deepFind(det,['決標方式'],false)||deepFind(target.brief||{},['決標方式'],false);
-      if(!row.得標廠商){
-        const n=target.brief?.companies?.names||[];
-        if(n.length) row.得標廠商=n.join('、');
-      }
-    } catch(e){}
+      if(!row.得標廠商){const n=target.brief?.companies?.names||[];if(n.length)row.得標廠商=n.join('、');}
+    }catch(e){}
     await sleep(400);
     if(done%5===0) renderTable(allData);
   }
 }
 
-function stopSearch() {
+function stopSearch(){
   shouldStop=true;
   if(abortCtrl) abortCtrl.abort();
   $('stopBtn').style.display='none';
   $('runBtn').disabled=false; $('runBtn').textContent='查詢';
-  setSb(`已中止，共 ${allData.length} 筆`,'warn');
+  setSb(`已中止，共取得 ${allData.length} 筆`,'warn');
   setPg('');
   filteredData=[...allData]; renderTable(filteredData);
   if(allData.length>0){$('fi').style.display='';$('exBtn').style.display='';$('shBtn').style.display='';}
 }
 
-async function run() {
+async function run(){
   const kw=$('kw').value.trim();
-  if (!kw){setSb('請輸入標案名稱關鍵字','warn');return;}
+  if(!kw){setSb('請輸入標案名稱關鍵字','warn');return;}
   const srcs=activeSrcs();
-  if (!srcs.length){setSb('請至少選一個查詢來源','warn');return;}
+  if(!srcs.length){setSb('請至少選一個查詢來源','warn');return;}
 
   const btn=$('runBtn');
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span> 查詢中...';
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> 查詢中…';
   $('stopBtn').style.display='';
   shouldStop=false; abortCtrl=new AbortController();
   allData=[]; filteredData=[];
-  $('tw').innerHTML='<div class="empty-state">查詢中...</div>';
+  $('tw').innerHTML='<div class="empty"><div class="empty-icon">⏳</div><p>查詢中，請稍候…</p></div>';
   $('fi').style.display='none'; $('exBtn').style.display='none'; $('shBtn').style.display='none';
-  $('cnt').textContent='';
-  setSb('','');
+  $('cnt').style.display='none'; setSb('','');
 
   const org=$('org').value.trim();
   const year=$('year').value;
   const quarter=$('quarter').value;
-  const atype=getAtype();
+  const atype=getSegVal('atypeSeg');
   const maxn=quarter?9999:parseInt($('maxn').value);
   const keywords=kw.split(/[,，\s]+/).map(k=>k.trim()).filter(k=>k);
   const {datebegin,dateend}=getDateRange(year,quarter);
 
-  const qLabel=quarter?` ${quarter}`:'';
-  setSb(`正在搜尋${year?` ${year}年${qLabel}`:''}「${kw}」${org?` × 機關「${org}」`:''}...`,'info');
+  const orgExp=org?` × 機關「${org}」`:'';
+  setSb(`搜尋 ${year?year+'年':''}${quarter?' '+quarter:''}「${kw}」${orgExp}…`,'info');
 
-  try {
-    for (const keyword of keywords) {
+  try{
+    for(const keyword of keywords){
       if(shouldStop) break;
-      setPg(`搜尋「${keyword}」中...`);
       const tasks=[];
       if(srcs.includes('pcc')) tasks.push(fetchPCC(keyword,org,maxn,datebegin,dateend,atype).catch(e=>e.message==='aborted'?[]:[]));
       if(srcs.includes('sinica')) tasks.push(fetchSinica(keyword,org).catch(()=>[]));
@@ -473,9 +535,9 @@ async function run() {
       renderTable(allData);
     }
 
-    const toEnrich=allData.filter(r=>r.來源==='PCC'&&r._tenderUrl&&r.公告類型==='決標公告');
+    const toEnrich=allData.filter(r=>r._src==='pcc'&&r._tenderUrl&&r.公告類型==='決標公告');
     if(toEnrich.length>0){
-      setSb(`基本資料 ${allData.length} 筆，補充金額與招標方式（${toEnrich.length} 筆）...`,'info');
+      setSb(`取得 ${allData.length} 筆，補充金額與招標方式（${toEnrich.length} 筆）…`,'info');
       await enrichAmounts(allData);
     }
 
@@ -484,29 +546,34 @@ async function run() {
     setSb(`查詢完成，共 ${allData.length} 筆`,'ok');
     setPg('');
     if(allData.length>0){$('fi').style.display='';$('exBtn').style.display='';$('shBtn').style.display='';}
-  } catch(e){if(e.message!=='aborted') setSb('錯誤：'+e.message,'err');}
+  }catch(e){if(e.message!=='aborted') setSb('錯誤：'+e.message,'err');}
 
   $('stopBtn').style.display='none';
   btn.disabled=false; btn.textContent='查詢';
   shouldStop=false;
 }
 
-const COLS=['公告類型','機關名稱','標案案號','標案名稱','招標方式','決標方式','預算金額','決標金額','底價金額','得標廠商','決標日期','來源','連結'];
+const COLS=['公告類型','機關名稱','標案案號','標案名稱','招標方式','決標方式','預算金額','決標金額','底價金額','得標廠商','決標日期','來源'];
+const EXPORT_COLS=[...COLS,'來源網址'];
 const AMT=new Set(['預算金額','決標金額','底價金額']);
 
-function renderTable(data) {
-  $('cnt').textContent=data.length?`共 ${data.length} 筆`:'';
-  if(!data.length){$('tw').innerHTML='<div class="empty-state">無符合資料</div>';return;}
-  let h='<table><thead><tr>'+COLS.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>';
+function renderTable(data){
+  const c=$('cnt');
+  if(data.length){c.textContent=data.length+' 筆';c.style.display='';}
+  else{c.style.display='none';}
+  if(!data.length){$('tw').innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>無符合資料</p></div>';return;}
+  let h='<table><thead><tr>'+COLS.map(c=>`<th>${c}</th>`).join('')+'<th>連結</th></tr></thead><tbody>';
   data.forEach(r=>{
     h+='<tr>';
     COLS.forEach(c=>{
       if(c==='公告類型') h+=`<td>${badgeHtml(r[c])}</td>`;
-      else if(c==='標案名稱') h+=`<td class="td-name">${r[c]||''}</td>`;
-      else if(c==='連結') h+=`<td><a href="${r['來源網址']||''}" target="_blank">檢視</a></td>`;
+      else if(c==='標案名稱') h+=`<td class="td-title">${r[c]||''}</td>`;
+      else if(c==='機關名稱') h+=`<td class="td-org">${r[c]||''}</td>`;
+      else if(c==='來源') h+=`<td>${srcTag(r._src||'')}</td>`;
       else if(AMT.has(c)) h+=`<td class="td-amt">${r[c]?parseInt(r[c]).toLocaleString():''}</td>`;
       else h+=`<td>${r[c]||''}</td>`;
     });
+    h+=`<td><a href="${r['來源網址']||''}" target="_blank">檢視</a></td>`;
     h+='</tr>';
   });
   h+='</tbody></table>';
@@ -521,32 +588,34 @@ function doFilter(){
 
 function doExcel(){
   if(!filteredData.length) return;
-  const cols=COLS.filter(c=>c!=='連結');
   const rows=filteredData.map(r=>{
     const o={};
-    cols.forEach(c=>{ o[c]=AMT.has(c)&&r[c]?parseInt(r[c]):(r[c]||''); });
+    COLS.filter(c=>c!=='來源').forEach(c=>{o[c]=AMT.has(c)&&r[c]?parseInt(r[c]):(r[c]||'');});
+    o['來源']={pcc:'PCC',sinica:'中研院',nhri:'國衛院'}[r._src]||r._src||'';
     o['來源網址']=r['來源網址']||'';
     return o;
   });
   const ws=XLSX.utils.json_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'採購查詢');
-  const fn=$('kw').value.trim().replace(/[\/\\?*[\] ,]/g,'_');
-  XLSX.writeFile(wb,'採購查詢_'+fn+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  XLSX.writeFile(wb,'採購查詢_'+$('kw').value.trim().replace(/[\/\\?*[\] ,]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
 function doSheet(){
   if(!filteredData.length) return;
-  const btn=$('shBtn'); btn.disabled=true; btn.textContent='準備中...';
-  const cols=[...COLS.filter(c=>c!=='連結'),'來源網址'];
+  const btn=$('shBtn');btn.disabled=true;btn.textContent='準備中…';
+  const cols=[...COLS.filter(c=>c!=='來源'),'來源','來源網址'];
   const esc=v=>{const s=String(v||'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;};
-  const csv=[cols,...filteredData.map(r=>cols.map(c=>esc(r[c]||'')))].map(row=>row.join(',')).join('\n');
+  const csv=[cols,...filteredData.map(r=>cols.map(c=>{
+    if(c==='來源') return esc({pcc:'PCC',sinica:'中研院',nhri:'國衛院'}[r._src]||'');
+    return esc(AMT.has(c)&&r[c]?parseInt(r[c]).toLocaleString():(r[c]||''));
+  }))].map(row=>row.join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
   a.download='採購查詢_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click(); URL.revokeObjectURL(a.href);
-  setTimeout(()=>{window.open('https://sheets.new','_blank');setSb('CSV已下載，在 Google Sheet 選「檔案→匯入」','ok');},400);
-  btn.disabled=false; btn.textContent='📊 Google Sheet';
+  a.click();URL.revokeObjectURL(a.href);
+  setTimeout(()=>{window.open('https://sheets.new','_blank');setSb('CSV 已下載，在 Google Sheet 選「檔案 → 匯入」','ok');},400);
+  btn.disabled=false;btn.textContent='📊 Google Sheet';
 }
 </script>
 </body>
