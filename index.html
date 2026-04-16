@@ -107,8 +107,6 @@ tbody tr:hover td{background:var(--gray-50)}
 /* Source tag */
 .src-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;background:var(--gray-100);color:var(--gray-500)}
 .src-pcc{background:#e0e7ff;color:#3730a3}
-.src-sinica{background:#fce7f3;color:#9d174d}
-.src-nhri{background:#d1fae5;color:#065f46}
 
 /* Empty */
 .empty{padding:60px 20px;text-align:center;color:var(--gray-400)}
@@ -126,19 +124,30 @@ tbody tr:hover td{background:var(--gray-50)}
 
 <header>
   <div class="logo"><div class="logo-dot"></div>採購情報系統</div>
-  <div class="header-sub"><span>PCC 政府採購網</span><span>中研院</span><span>國衛院</span></div>
+  <div class="header-sub"><span>PCC 政府採購網</span></div>
 </header>
 
 <div class="app">
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-section">
-      <div class="field">
+        <div class="seg" id="searchModeSeg" style="margin-bottom:14px">
+          <button class="seg-btn active" data-v="title" onclick="setSeg('searchModeSeg',this);toggleSearchMode('title')">標案名稱</button>
+          <button class="seg-btn" data-v="company" onclick="setSeg('searchModeSeg',this);toggleSearchMode('company')">得標廠商</button>
+        </div>
+
+      <div class="field" id="kwField">
         <label class="label">標案名稱關鍵字</label>
         <input class="input" type="text" id="kw" placeholder="顯微鏡、Bio-Rad、離心機">
         <div class="input-hint">多個關鍵字以空格或逗號分隔</div>
       </div>
-      <div class="field">
+
+      <div class="field" id="coField" style="display:none">
+        <label class="label">得標廠商名稱</label>
+        <input class="input" type="text" id="co" placeholder="正茂生物、卡爾蔡司、上宸光學">
+        <div class="input-hint">輸入部分名稱即可，多個用空格或逗號分隔</div>
+      </div>
+      <div class="field" id="orgField">
         <label class="label">機關名稱篩選 <span style="font-weight:400;text-transform:none;color:#bbb">（可選）</span></label>
         <input class="input" type="text" id="org" placeholder="台大、成大、中研院…">
         <div class="input-hint">支援縮寫，如「台大」→ 臺灣大學，「成大」→ 成功大學</div>
@@ -175,8 +184,6 @@ tbody tr:hover td{background:var(--gray-50)}
         <label class="label">標案狀態</label>
         <div class="seg" id="atypeSeg">
           <button class="seg-btn active" data-v="決標公告" onclick="setSeg('atypeSeg',this)">決標</button>
-          <button class="seg-btn" data-v="招標公告" onclick="setSeg('atypeSeg',this)">招標</button>
-          <button class="seg-btn" data-v="無法決標公告" onclick="setSeg('atypeSeg',this)">無法決標</button>
           <button class="seg-btn" data-v="" onclick="setSeg('atypeSeg',this)">全部</button>
         </div>
       </div>
@@ -205,15 +212,6 @@ tbody tr:hover td{background:var(--gray-50)}
       <label class="label">查詢來源</label>
       <div class="check-list">
         <label class="check-item"><input type="checkbox" id="src-pcc" checked><span>政府採購網 PCC</span></label>
-        <label class="check-item"><input type="checkbox" id="src-sinica" checked><span>中研院科研採購</span></label>
-        <label class="check-item"><input type="checkbox" id="src-nhri" checked><span>國衛院採購</span></label>
-      </div>
-      <div class="cors-notice">
-        <strong>⚠️ 中研院 / 國衛院說明</strong>
-        因跨域限制，這兩個來源的資料需透過代理取得，速度較慢或偶有失敗。
-        若查不到可直接前往：
-        <a href="https://srp.sinica.edu.tw/InviteBids/AwardIndex" target="_blank">中研院採購網</a> ·
-        <a href="https://supplier.nhri.edu.tw/PUR/share/master" target="_blank">國衛院採購網</a>
       </div>
     </div>
 
@@ -298,13 +296,57 @@ function setSeg(id, btn){
   document.querySelectorAll(`#${id} .seg-btn`).forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
-function activeSrcs(){ return ['pcc','sinica','nhri'].filter(s=>$('src-'+s).checked); }
+function activeSrcs(){ return ['pcc'].filter(s=>$('src-'+s).checked); }
 
 function setSb(m,t){const b=$('sb');if(!m){b.style.display='none';b.className='status';return;}b.className='status '+t;b.textContent=m;}
 function setPg(m){$('pg').textContent=m||'';}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-function getDateRange(year,quarter){
+function toggleSearchMode(mode) {
+  $('kwField').style.display = mode==='title' ? '' : 'none';
+  $('coField').style.display = mode==='company' ? '' : 'none';
+  $('orgField').style.display = mode==='title' ? '' : 'none';
+}
+
+function getSearchMode(){ return getSegVal('searchModeSeg')||'title'; }
+
+async function fetchPCCbyCompany(company, maxn, datebegin, dateend) {
+  const results=[];
+  let page=1;
+  const MAX_PAGES=50;
+  while(results.length<maxn && page<=MAX_PAGES){
+    if(shouldStop) break;
+    let url=`${API}/searchbycompanyname?query=${encodeURIComponent(company)}&page=${page}`;
+    if(datebegin) url+=`&datebegin=${datebegin}&dateend=${dateend}`;
+    const r=await fetchWithRetry(url);
+    if(!r||!r.ok) break;
+    const d=await r.json();
+    if(!d.records?.length) break;
+    for(const rec of d.records){
+      if(results.length>=maxn||shouldStop) break;
+      const atype=getSegVal('atypeSeg');
+      if(atype && rec.brief?.type!==atype) continue;
+      const ttype=getSegVal('ttypeSeg');
+      const cat=rec.brief?.category||'';
+      if(ttype&&cat&&!cat.includes(ttype)) continue;
+      const vendor=(rec.brief?.companies?.names||[]).join('、');
+      const jobUrl='https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?querySentence='+encodeURIComponent(rec.job_number||'');
+      results.push({
+        _src:'pcc', 公告類型:rec.brief?.type||'',
+        機關名稱:rec.unit_name||'', 標案案號:rec.job_number||'',
+        標案名稱:rec.brief?.title||'',
+        招標方式:'', 決標方式:'', 預算金額:'', 決標金額:'', 底價金額:'',
+        得標廠商:vendor, 決標日期:fmtDate(rec.date),
+        來源網址:jobUrl, _tenderUrl:rec.tender_api_url||''
+      });
+    }
+    if(page>=(d.total_pages||1)) break;
+    page++;
+    try{setPg(`得標廠商搜尋第 ${page} 頁，已找到 ${results.length} 筆…`);}catch(e){}
+    await sleep(150);
+  }
+  return results;
+}
   if(!year) return {datebegin:'',dateend:''};
   const qMap={Q1:['01-01','03-31'],Q2:['04-01','06-30'],Q3:['07-01','09-30'],Q4:['10-01','12-31']};
   if(quarter&&qMap[quarter]) return {datebegin:year+'-'+qMap[quarter][0],dateend:year+'-'+qMap[quarter][1]};
@@ -332,8 +374,7 @@ function badgeHtml(type){
   return `<span class="badge ${m[type]||'b-other'}">${l[type]||type||'—'}</span>`;
 }
 function srcTag(src){
-  const m={'pcc':'src-pcc','sinica':'src-sinica','nhri':'src-nhri'};
-  return `<span class="src-tag ${m[src]||''}">${src.toUpperCase()}</span>`;
+  return `<span class="src-tag src-pcc">PCC</span>`;
 }
 
 function recToRow(rec, src, orgInput){
@@ -381,69 +422,11 @@ async function fetchPCC(keyword,orgInput,maxn,datebegin,dateend,atype){
   return results;
 }
 
-// Use allorigins CORS proxy for sinica/nhri
-async function fetchViaProxy(url){
-  const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-  const r=await fetch(proxy,{signal:abortCtrl?.signal});
-  if(!r.ok) throw new Error('proxy failed');
-  return r.text();
-}
 
-async function fetchSinica(keyword,orgInput){
-  const results=[];
-  try{
-    const url=`https://srp.sinica.edu.tw/InviteBids/AwardIndex?keyword=${encodeURIComponent(keyword)}`;
-    let html;
-    try{ const r=await fetch(url,{signal:abortCtrl?.signal}); if(r.ok) html=await r.text(); }
-    catch(e){ html=await fetchViaProxy(url); }
-    if(!html) return results;
-    const doc=new DOMParser().parseFromString(html,'text/html');
-    doc.querySelectorAll('table tbody tr').forEach(tr=>{
-      const tds=tr.querySelectorAll('td');
-      if(tds.length<4) return;
-      if(orgInput&&!orgMatch('中央研究院',orgInput)) return;
-      const link=tr.querySelector('a');
-      results.push({
-        _src:'sinica', 公告類型:'決標公告', 機關名稱:'中央研究院',
-        標案案號:tds[0]?.innerText?.trim()||'', 標案名稱:tds[2]?.innerText?.trim()||'',
-        招標方式:'', 決標方式:'', 預算金額:'',
-        決標金額:cleanAmt(tds[4]?.innerText||''), 底價金額:'',
-        得標廠商:tds[5]?.innerText?.trim()||'', 決標日期:tds[3]?.innerText?.trim()||'',
-        來源網址:link?'https://srp.sinica.edu.tw'+link.getAttribute('href'):'',
-        _tenderUrl:''
-      });
-    });
-  }catch(e){ console.warn('Sinica error:',e); }
-  return results;
-}
 
-async function fetchNHRI(keyword,orgInput){
-  const results=[];
-  if(orgInput&&!orgMatch('國家衛生研究院',orgInput)) return results;
-  try{
-    const url=`https://supplier.nhri.edu.tw/PUR/share/master?keyword=${encodeURIComponent(keyword)}`;
-    let html;
-    try{ const r=await fetch(url,{signal:abortCtrl?.signal}); if(r.ok) html=await r.text(); }
-    catch(e){ html=await fetchViaProxy(url); }
-    if(!html) return results;
-    const doc=new DOMParser().parseFromString(html,'text/html');
-    doc.querySelectorAll('table tbody tr').forEach(tr=>{
-      const tds=tr.querySelectorAll('td');
-      if(tds.length<3) return;
-      const link=tr.querySelector('a');
-      results.push({
-        _src:'nhri', 公告類型:'決標公告', 機關名稱:'國家衛生研究院',
-        標案案號:tds[0]?.innerText?.trim()||'', 標案名稱:tds[1]?.innerText?.trim()||'',
-        招標方式:'', 決標方式:'', 預算金額:'',
-        決標金額:cleanAmt(tds[3]?.innerText||''), 底價金額:'',
-        得標廠商:tds[4]?.innerText?.trim()||'', 決標日期:tds[2]?.innerText?.trim()||'',
-        來源網址:link?'https://supplier.nhri.edu.tw'+link.getAttribute('href'):'',
-        _tenderUrl:''
-      });
-    });
-  }catch(e){ console.warn('NHRI error:',e); }
-  return results;
-}
+
+
+
 
 function deepFind(obj,patterns,isAmt){
   if(!obj||typeof obj!=='object') return '';
@@ -498,10 +481,10 @@ function stopSearch(){
 }
 
 async function run(){
-  const kw=$('kw').value.trim();
-  if(!kw){setSb('請輸入標案名稱關鍵字','warn');return;}
-  const srcs=activeSrcs();
-  if(!srcs.length){setSb('請至少選一個查詢來源','warn');return;}
+  const mode=getSearchMode();
+  const isCompany=mode==='company';
+  const inputVal=isCompany?$('co').value.trim():$('kw').value.trim();
+  if(!inputVal){setSb(isCompany?'請輸入得標廠商名稱':'請輸入標案名稱關鍵字','warn');return;}
 
   const btn=$('runBtn');
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> 查詢中…';
@@ -515,23 +498,24 @@ async function run(){
   const org=$('org').value.trim();
   const year=$('year').value;
   const quarter=$('quarter').value;
-  const atype=getSegVal('atypeSeg');
   const maxn=quarter?9999:parseInt($('maxn').value);
-  const keywords=kw.split(/[,，\s]+/).map(k=>k.trim()).filter(k=>k);
+  const keywords=inputVal.split(/[,，\s]+/).map(k=>k.trim()).filter(k=>k);
   const {datebegin,dateend}=getDateRange(year,quarter);
 
-  const orgExp=org?` × 機關「${org}」`:'';
-  setSb(`搜尋 ${year?year+'年':''}${quarter?' '+quarter:''}「${kw}」${orgExp}…`,'info');
+  const modeLabel=isCompany?'得標廠商':'標案名稱';
+  const orgExp=(!isCompany&&org)?` × 機關「${org}」`:'';
+  setSb(`搜尋${year?' '+year+'年':''}${quarter?' '+quarter:''}${modeLabel}「${inputVal}」${orgExp}…`,'info');
 
   try{
     for(const keyword of keywords){
       if(shouldStop) break;
-      const tasks=[];
-      if(srcs.includes('pcc')) tasks.push(fetchPCC(keyword,org,maxn,datebegin,dateend,atype).catch(e=>e.message==='aborted'?[]:[]));
-      if(srcs.includes('sinica')) tasks.push(fetchSinica(keyword,org).catch(()=>[]));
-      if(srcs.includes('nhri'))   tasks.push(fetchNHRI(keyword,org).catch(()=>[]));
-      const batches=await Promise.all(tasks);
-      batches.forEach(b=>allData.push(...b));
+      let batch;
+      if(isCompany){
+        batch=await fetchPCCbyCompany(keyword,maxn,datebegin,dateend).catch(e=>e.message==='aborted'?[]:[] );
+      } else {
+        batch=await fetchPCC(keyword,org,maxn,datebegin,dateend,getSegVal('atypeSeg')).catch(e=>e.message==='aborted'?[]:[] );
+      }
+      allData.push(...batch);
       renderTable(allData);
     }
 
@@ -591,7 +575,7 @@ function doExcel(){
   const rows=filteredData.map(r=>{
     const o={};
     COLS.filter(c=>c!=='來源').forEach(c=>{o[c]=AMT.has(c)&&r[c]?parseInt(r[c]):(r[c]||'');});
-    o['來源']={pcc:'PCC',sinica:'中研院',nhri:'國衛院'}[r._src]||r._src||'';
+    o['來源']='PCC';
     o['來源網址']=r['來源網址']||'';
     return o;
   });
@@ -607,7 +591,7 @@ function doSheet(){
   const cols=[...COLS.filter(c=>c!=='來源'),'來源','來源網址'];
   const esc=v=>{const s=String(v||'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;};
   const csv=[cols,...filteredData.map(r=>cols.map(c=>{
-    if(c==='來源') return esc({pcc:'PCC',sinica:'中研院',nhri:'國衛院'}[r._src]||'');
+    if(c==='來源') return esc('PCC');
     return esc(AMT.has(c)&&r[c]?parseInt(r[c]).toLocaleString():(r[c]||''));
   }))].map(row=>row.join(',')).join('\n');
   const a=document.createElement('a');
