@@ -151,6 +151,7 @@ tr:hover td{background:#f8fbff}
         <option value="50" selected>50筆</option>
         <option value="100">100筆</option>
         <option value="200">200筆（較慢）</option>
+        <option value="9999">不限（最慢）</option>
       </select>
     </div>
     <div><div class="lbl">標案種類</div>
@@ -169,7 +170,10 @@ tr:hover td{background:#f8fbff}
       <div class="chip on" data-v="nhri">國衛院採購</div>
     </div>
   </div>
-  <button class="btn-main" id="runBtn" onclick="run()">開始查詢</button>
+  <div style="display:flex;gap:10px;margin-top:8px">
+    <button class="btn-main" id="runBtn" onclick="run()" style="flex:1">開始查詢</button>
+    <button class="btn-sm" id="stopBtn" onclick="stopSearch()" style="display:none;min-width:80px;background:#fee2e2;color:#991b1b;border-color:#fca5a5">■ 中止</button>
+  </div>
 </div>
 
 <div class="card">
@@ -193,6 +197,21 @@ const API = 'https://pcc-api.openfun.app/api';
 let tType = '', activeSrc = new Set(['pcc','sinica','nhri']);
 let activeTab = 'kw';
 let allData = [], filteredData = [];
+let abortCtrl = null;
+let shouldStop = false;
+
+function stopSearch() {
+  shouldStop = true;
+  if (abortCtrl) abortCtrl.abort();
+  $('stopBtn').style.display = 'none';
+  $('runBtn').disabled = false;
+  $('runBtn').textContent = '開始查詢';
+  setSb(`已中止，目前共 ${allData.length} 筆`, 'warn');
+  setPg('');
+  filteredData = [...allData];
+  renderTable(filteredData);
+  if (allData.length > 0) { $('fi').style.display=''; $('exBtn').style.display=''; $('shBtn').style.display=''; }
+}
 
 // Tab switch
 function switchTab(t) {
@@ -258,10 +277,10 @@ function recToRow(rec, src) {
 async function fetchPCC(keyword, maxn, datebegin, dateend, atype) {
   const results = [];
   let page = 1;
-  const MAX_PAGES = 30; // prevent infinite pagination
-  let emptyFilterStreak = 0; // stop if many consecutive pages have no matching type
+  const MAX_PAGES = atype ? 50 : 30; // more pages if filtering by type
 
   while (results.length < maxn && page <= MAX_PAGES) {
+    if (shouldStop) break;
     let url = `${API}/searchbytitle?query=${encodeURIComponent(keyword)}&page=${page}`;
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
     const r = await fetchWithRetry(url);
@@ -269,71 +288,58 @@ async function fetchPCC(keyword, maxn, datebegin, dateend, atype) {
     const d = await r.json();
     if (!d.records?.length) break;
 
-    let addedThisPage = 0;
     for (const rec of d.records) {
-      if (results.length >= maxn) break;
+      if (results.length >= maxn || shouldStop) break;
       if (atype && rec.brief?.type !== atype) continue;
       const row = recToRow(rec, 'pcc');
-      if (row) { results.push(row); addedThisPage++; }
+      if (row) results.push(row);
     }
-
-    // If 5 consecutive pages yield nothing, stop early
-    if (addedThisPage === 0) emptyFilterStreak++;
-    else emptyFilterStreak = 0;
-    if (emptyFilterStreak >= 5) break;
 
     if (page >= (d.total_pages||1)) break;
     page++;
     try { setPg(`搜尋中... 第 ${page} 頁，已找到 ${results.length} 筆`); } catch(e){}
-    await sleep(100);
+    await sleep(150);
   }
   return results;
 }
 
 // ── PCC: search by company ─────────────────────────────
+// Strategy: search by company name as keyword, then filter records where
+// the company name appears in brief.companies.names array.
+// This works because PCC full-text includes company fields.
 async function fetchPCCbyCompany(company, maxn, datebegin, dateend, atype) {
   const results = [];
   let page = 1;
-
-  // Try searchbycompany first, fall back to searchbytitle
-  let endpoint = 'searchbycompany';
-  let paramKey = 'company';
-  try {
-    const testUrl = `${API}/searchbycompany?company=${encodeURIComponent(company)}&page=1`;
-    const tr = await fetchWithRetry(testUrl, 1);
-    if (!tr || !tr.ok) { endpoint = 'searchbytitle'; paramKey = 'query'; }
-    else {
-      const td = await tr.json();
-      if (!td.records) { endpoint = 'searchbytitle'; paramKey = 'query'; }
-    }
-  } catch(e) { endpoint = 'searchbytitle'; paramKey = 'query'; }
-
-  const MAX_PAGES = 30;
-  let emptyFilterStreak = 0;
+  const MAX_PAGES = 50;
+  const coLower = company.toLowerCase();
 
   while (results.length < maxn && page <= MAX_PAGES) {
-    let url = `${API}/${endpoint}?${paramKey}=${encodeURIComponent(company)}&page=${page}`;
+    if (shouldStop) break;
+    // Use searchbytitle which does full-text search across all fields
+    let url = `${API}/searchbytitle?query=${encodeURIComponent(company)}&page=${page}`;
     if (datebegin) url += `&datebegin=${datebegin}&dateend=${dateend}`;
     const r = await fetchWithRetry(url);
     if (!r || !r.ok) break;
     const d = await r.json();
     if (!d.records?.length) break;
 
-    let addedThisPage = 0;
     for (const rec of d.records) {
-      if (results.length >= maxn) break;
+      if (results.length >= maxn || shouldStop) break;
       if (atype && rec.brief?.type !== atype) continue;
-      const row = recToRow(rec, 'pcc');
-      if (row) { results.push(row); addedThisPage++; }
-    }
 
-    if (addedThisPage === 0) emptyFilterStreak++;
-    else emptyFilterStreak = 0;
-    if (emptyFilterStreak >= 5) break;
+      // Accept record if company name appears in companies.names OR in title
+      const namesStr = (rec.brief?.companies?.names || []).join(' ').toLowerCase();
+      const titleStr = (rec.brief?.title || '').toLowerCase();
+      if (!namesStr.includes(coLower) && !titleStr.includes(coLower)) continue;
+
+      const row = recToRow(rec, 'pcc');
+      if (row) results.push(row);
+    }
 
     if (page >= (d.total_pages||1)) break;
     page++;
-    await sleep(100);
+    try { setPg(`公司搜尋中... 第 ${page} 頁，已找到 ${results.length} 筆`); } catch(e){}
+    await sleep(150);
   }
   return results;
 }
@@ -478,11 +484,13 @@ function getDateRange(year, quarter) {
   return { datebegin: year+'-01-01', dateend: year+'-12-31' };
 }
 
-// Fetch with retry
+// Fetch with retry and abort support
 async function fetchWithRetry(url, retries=2, delay=600) {
   for (let i=0; i<=retries; i++) {
+    if (shouldStop) throw new Error('aborted');
     try {
-      const r = await fetch(url);
+      const signal = abortCtrl ? abortCtrl.signal : undefined;
+      const r = await fetch(url, { signal });
       if (r.ok) return r;
       if (r.status === 429 || r.status >= 500) {
         if (i < retries) await sleep(delay * (i+1));
@@ -490,6 +498,7 @@ async function fetchWithRetry(url, retries=2, delay=600) {
       }
       return r;
     } catch(e) {
+      if (e.name === 'AbortError' || shouldStop) throw new Error('aborted');
       if (i < retries) await sleep(delay * (i+1));
       else throw e;
     }
@@ -506,6 +515,9 @@ async function run() {
   const btn = $('runBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> 查詢中...';
+  $('stopBtn').style.display = '';
+  shouldStop = false;
+  abortCtrl = new AbortController();
   allData = []; filteredData = [];
   $('tw').innerHTML = '<div class="empty">查詢中...</div>';
   $('fi').style.display='none'; $('exBtn').style.display='none'; $('shBtn').style.display='none';
@@ -522,12 +534,12 @@ async function run() {
 
   try {
     for (const kw of keywords) {
+      if (shouldStop) break;
       setPg(`搜尋「${kw}」中...`);
       const tasks = [];
       if (activeSrc.has('pcc')) {
         const fn = isCompany ? fetchPCCbyCompany : fetchPCC;
-        // Wrap to show progress
-        const pccTask = fn(kw, maxn, datebegin, dateend, atype).catch(()=>[]);
+        const pccTask = fn(kw, maxn, datebegin, dateend, atype).catch(e => e.message==='aborted'?[]:[] );
         tasks.push(pccTask);
       }
       if (!isCompany) {
@@ -551,9 +563,11 @@ async function run() {
     setSb(`查詢完成，共 ${allData.length} 筆`,'ok');
     setPg('');
     if (allData.length > 0) { $('fi').style.display=''; $('exBtn').style.display=''; $('shBtn').style.display=''; }
-  } catch(e) { setSb('錯誤：'+e.message,'err'); }
+  } catch(e) { if (e.message !== 'aborted') setSb('錯誤：'+e.message,'err'); }
 
+  $('stopBtn').style.display = 'none';
   btn.disabled=false; btn.textContent='開始查詢';
+  shouldStop = false;
 }
 
 // ── Render ─────────────────────────────────────────────
