@@ -442,9 +442,9 @@ async function fetchPCC(kw,orgInput,maxn,datebegin,dateend,atype){
     for(const rec of d.records){
       if(results.length>=maxn||shouldStop) break pageLoop;
       const rd=rec.date||0;
-      // Client-side date guard: skip records outside range
+      // API already filters server-side; client-side just skips stragglers
+      if(dateFrom&&rd<dateFrom) continue;
       if(dateTo&&rd>dateTo) continue;
-      if(dateFrom&&rd<dateFrom) { break pageLoop; } // sorted newest-first, stop
       if(atype&&rec.brief?.type!==atype) continue;
       if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype)) continue;
       if(!orgMatch(rec.unit_name||'',orgInput)) continue;
