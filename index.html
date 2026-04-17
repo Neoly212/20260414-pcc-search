@@ -240,6 +240,8 @@ const API='https://pcc-api.openfun.app/api';
 let allData=[],filteredData=[],shouldStop=false,abortCtrl=null;
 const $=id=>document.getElementById(id);
 
+const SVG_SEARCH='<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>';
+
 const ORG_ALIASES={'台大':'臺灣大學','臺大':'臺灣大學','成大':'成功大學','清大':'清華大學','交大':'陽明交通大學','政大':'政治大學','師大':'師範大學','北大':'臺北大學','中央':'中央大學','中興':'中興大學','東華':'東華大學','高醫':'高雄醫學大學','北醫':'臺北醫學大學','陽明':'陽明大學','輔大':'輔仁大學','東吳':'東吳大學','淡江':'淡江大學','中研院':'中央研究院','台大醫院':'臺灣大學醫學院附設醫院','榮總':'榮民總醫院','台北榮總':'臺北榮民總醫院','高雄榮總':'高雄榮民總醫院','三總':'三軍總醫院','國科會':'國家科學及技術委員會','衛福部':'衛生福利部'};
 
 function expandOrg(s){return ORG_ALIASES[s]||s;}
@@ -259,7 +261,6 @@ function setSb(m,t){const b=$('sb');if(!m){b.className='status';b.textContent=''
 function setPg(m){$('pg').textContent=m||'';}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-// date helpers
 function fmtDate(d){if(!d)return'';const s=String(d);return s.length===8?s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8):s;}
 function getDateRange(year,quarter){
   if(!year)return{qs:'',qe:''};
@@ -295,7 +296,7 @@ function makeRow(rec){
   };
 }
 
-// ── Title search (API has server-side date filter) ─────────────────
+// ── Title search ───────────────────────────────────────────────────
 async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype){
   const ttype=getSegVal('ttypeSeg');
   const dateFrom=toInt(qs),dateTo=toInt(qe);
@@ -323,7 +324,8 @@ async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype){
   return results;
 }
 
-// ── Company search (NO server-side date filter; scan pages; stop when all records on page are older than dateFrom) ─────────────────
+// ── Company search ─────────────────────────────────────────────────
+// 修正：pageMaxDate 計算排除 null/0，避免第一頁誤判直接 break
 async function fetchByCompany(co,kwFilter,orgQ,maxn,qs,qe,atype){
   const ttype=getSegVal('ttypeSeg');
   const kwL=kwFilter?kwFilter.toLowerCase():'';
@@ -335,16 +337,17 @@ async function fetchByCompany(co,kwFilter,orgQ,maxn,qs,qe,atype){
     const r=await apiFetch(url);if(!r||!r.ok)break;
     const d=await r.json();if(!d.records?.length)break;
     const recs=d.records;
-    // Stop if the newest record on this whole page is older than our range
+    // 只用有效日期（>0）判斷是否已超出範圍，避免 null 造成 Math.max 回傳 0 而誤 break
     if(dateFrom){
-      const pageMaxDate=Math.max(...recs.map(x=>x.date||0));
+      const validDates=recs.map(x=>x.date||0).filter(d=>d>0);
+      const pageMaxDate=validDates.length?Math.max(...validDates):Infinity;
       if(pageMaxDate<dateFrom)break;
     }
     for(const rec of recs){
       if(results.length>=maxn||shouldStop)break;
       const rd=rec.date||0;
-      if(dateFrom&&rd<dateFrom)continue;
-      if(dateTo&&rd>dateTo)continue;
+      if(dateFrom&&rd>0&&rd<dateFrom)continue;
+      if(dateTo&&rd>0&&rd>dateTo)continue;
       if(atype&&rec.brief?.type!==atype)continue;
       if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype))continue;
       if(kwL&&!(rec.brief?.title||'').toLowerCase().includes(kwL))continue;
@@ -412,7 +415,6 @@ function showTools(){
   $('exBtn').style.display='inline-block';
   $('shBtn').style.display='inline-block';
 }
-const SVG_SEARCH='<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>';
 
 // ── Run ────────────────────────────────────────────────────────────
 async function run(){
