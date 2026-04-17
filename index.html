@@ -209,8 +209,7 @@ tbody tr:hover td{background:#eff6ff !important}
 .b-other{background:#f0f4f8;color:#57606a;border:1px solid #c8d6f0}
 
 /* Amount highlight */
-.amt-high{color:#1a7f37;font-weight:700}
-.amt-mid{color:#bc4c00;font-weight:700}
+.amt-val{font-weight:600;color:var(–ink)}
 
 /* Empty */
 .empty{padding:64px 24px;text-align:center}
@@ -407,7 +406,13 @@ async function fetchWithRetry(url,retries=2,delay=700){
   }
 }
 
-function fmtDate(d){if(!d)return'';const s=String(d);return s.length===8?s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8):s;}
+function orgHtml(name){
+  if(!name) return'<span style="color:#aaa">—</span>';
+  // If name looks like an ID (only numbers, dots, letters without Chinese), style differently
+  const hasChinese=/[\u4e00-\u9fff]/.test(name);
+  if(!hasChinese) return`<span style="color:#8c959f;font-size:11px;font-style:italic" title="機關代碼，無中文名稱">${name}</span>`;
+  return name;
+}
 
 function badgeHtml(t){
   const m={'決標公告':'b-award','招標公告':'b-tender','無法決標公告':'b-fail'};
@@ -417,17 +422,17 @@ function badgeHtml(t){
 
 function amtHtml(v){
   if(!v) return'';
-  const n=parseInt(v);
-  const s=n.toLocaleString();
-  if(n>=5000000) return`<span class="amt-high">${s}</span>`;
-  if(n>=1000000) return`<span class="amt-mid">${s}</span>`;
-  return s;
+  return`<span class="amt-val">${parseInt(v).toLocaleString()}</span>`;
 }
 
 // ── fetchPCC (title search) ──────────────────────────────
 async function fetchPCC(kw,orgInput,maxn,datebegin,dateend,atype){
   const results=[],ttype=getSegVal('ttypeSeg');
+  const dateFrom=datebegin?parseInt(datebegin.replace(/-/g,'')):0;
+  const dateTo=dateend?parseInt(dateend.replace(/-/g,'')):99999999;
   let page=1;const MAX=atype?60:35;
+
+  pageLoop:
   while(results.length<maxn&&page<=MAX){
     if(shouldStop) break;
     let url=`${API}/searchbytitle?query=${encodeURIComponent(kw)}&page=${page}`;
@@ -435,7 +440,11 @@ async function fetchPCC(kw,orgInput,maxn,datebegin,dateend,atype){
     const r=await fetchWithRetry(url);if(!r||!r.ok) break;
     const d=await r.json();if(!d.records?.length) break;
     for(const rec of d.records){
-      if(results.length>=maxn||shouldStop) break;
+      if(results.length>=maxn||shouldStop) break pageLoop;
+      const rd=rec.date||0;
+      // Client-side date guard: skip records outside range
+      if(dateTo&&rd>dateTo) continue;
+      if(dateFrom&&rd<dateFrom) { break pageLoop; } // sorted newest-first, stop
       if(atype&&rec.brief?.type!==atype) continue;
       if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype)) continue;
       if(!orgMatch(rec.unit_name||'',orgInput)) continue;
@@ -649,6 +658,7 @@ function renderTable(data){
     COLS.forEach(col=>{
       const cls=col.cls?` class="${col.cls}"`:'';
       if(col.k==='_type') h+=`<td>${badgeHtml(r._type)}</td>`;
+      else if(col.k==='_org') h+=`<td class="td-org">${orgHtml(r._org)}</td>`;
       else if(col.amt)    h+=`<td class="td-amt">${amtHtml(r[col.k])}</td>`;
       else                h+=`<td${cls}>${r[col.k]||''}</td>`;
     });
