@@ -406,6 +406,8 @@ async function fetchWithRetry(url,retries=2,delay=700){
   }
 }
 
+function fmtDate(d){if(!d)return'';const s=String(d);return s.length===8?s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8):s;}
+
 function orgHtml(name){
   if(!name) return'<span style="color:#aaa">—</span>';
   // If name looks like an ID (only numbers, dots, letters without Chinese), style differently
