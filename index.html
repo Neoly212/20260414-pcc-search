@@ -173,7 +173,7 @@ tbody tr:hover td{background:var(--gray-50)}
         </select>
       </div>
       <div class="field">
-        <label class="label">季度 <span style="font-weight:400;text-transform:none;color:#bbb">（選季度時自動抓全部）</span></label>
+        <label class="label">季度</label>
         <select class="input" id="quarter">
           <option value="">不限季度</option>
           <option value="Q1">Q1（1–3月）</option>
@@ -534,8 +534,7 @@ async function run(){
   const org=$('org').value.trim();
   const year=$('year').value;
   const quarter=$('quarter').value;
-  const rawMaxn = parseInt($('maxn').value) || 50;
-  const maxn = quarter ? 9999 : rawMaxn;
+  const maxn = parseInt($('maxn').value) || 50;
   const keywords=inputVal.split(/[,，\s]+/).map(k=>k.trim()).filter(k=>k);
   const {datebegin,dateend}=getDateRange(year,quarter);
 
