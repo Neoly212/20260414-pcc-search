@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -46,52 +45,52 @@ body{font-family:var(--font);background:var(--surf2);color:var(--ink);line-heigh
 .field{margin-bottom:12px}
 .field:last-child{margin-bottom:0}
 .label{display:block;font-size:11px;font-weight:700;color:#3b5998;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-.label .opt{font-weight:400;text-transform:none;color:var(–ink4);font-size:10px}
-input.inp,select.inp{width:100%;height:32px;padding:0 10px;border:1px solid #b8cce8;border-radius:var(–r);font-size:13px;font-family:var(–font);color:var(–ink);background:#fff;transition:border-color .15s,box-shadow .15s}
-input.inp:focus,select.inp:focus{outline:none;border-color:var(–blue);box-shadow:0 0 0 3px rgba(9,105,218,.15);background:#fafcff}
+.label .opt{font-weight:400;text-transform:none;color:var(--ink4);font-size:10px}
+input.inp,select.inp{width:100%;height:32px;padding:0 10px;border:1px solid #b8cce8;border-radius:var(--r);font-size:13px;font-family:var(--font);color:var(--ink);background:#fff;transition:border-color .15s,box-shadow .15s}
+input.inp:focus,select.inp:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(9,105,218,.15);background:#fafcff}
 input.inp::placeholder{color:#aab8cc}
-select.inp{cursor:pointer;appearance:none;background-image:url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘10’ height=‘6’%3E%3Cpath d=‘M0 0l5 6 5-6z’ fill=’%238c959f’/%3E%3C/svg%3E”);background-repeat:no-repeat;background-position:right 10px center;padding-right:26px}
+select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238c959f'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px}
 .hint{font-size:11px;color:#7a94b8;margin-top:3px;line-height:1.4}
 
-.seg{display:flex;background:#e4edf8;border:1px solid #b8cce8;border-radius:var(–r);padding:3px;gap:2px;margin-bottom:12px}
-.seg-btn{flex:1;height:26px;border:none;border-radius:4px;font-size:12px;font-weight:500;font-family:var(–font);cursor:pointer;color:#5a7aaa;background:transparent;transition:.15s}
+.seg{display:flex;background:#e4edf8;border:1px solid #b8cce8;border-radius:var(--r);padding:3px;gap:2px;margin-bottom:12px}
+.seg-btn{flex:1;height:26px;border:none;border-radius:4px;font-size:12px;font-weight:500;font-family:var(--font);cursor:pointer;color:#5a7aaa;background:transparent;transition:.15s}
 .seg-btn:hover{color:#0969da;background:rgba(9,105,218,.08)}
 .seg-btn.on{background:#fff;color:#0969da;box-shadow:0 1px 3px rgba(9,105,218,.15),0 0 0 1px rgba(9,105,218,.12);font-weight:700}
 
-.btn-primary{width:100%;height:36px;background:var(–blue);color:#fff;border:1px solid #0756b8;border-radius:var(–r);font-size:13px;font-weight:600;font-family:var(–font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s;letter-spacing:.01em}
+.btn-primary{width:100%;height:36px;background:#0969da;color:#fff;border:1px solid #0756b8;border-radius:var(--r);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s;letter-spacing:.01em}
 .btn-primary:hover{background:#0756b8}
-.btn-primary:disabled{background:var(–surf3);color:var(–ink4);border-color:var(–border);cursor:not-allowed}
-.btn-stop{width:100%;height:32px;background:var(–red-bg);color:var(–red);border:1px solid var(–red-border);border-radius:var(–r);font-size:12px;font-weight:600;font-family:var(–font);cursor:pointer;display:none;transition:.15s}
-.btn-stop:hover{background:#ffd4d3}
+.btn-primary:disabled{background:#9ca3af;color:#fff;border-color:#9ca3af;cursor:not-allowed}
+.btn-stop{width:100%;height:32px;background:#dc2626;color:#fff;border:1px solid #b91c1c;border-radius:var(--r);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;display:none;transition:.15s}
+.btn-stop:hover{background:#b91c1c}
 .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.content{padding:20px 24px;min-width:0;background:var(–surf2)}
-.toolbar{background:#fff;border:1px solid #c8d6f0;border-radius:var(–r-lg);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(9,105,218,.08)}
+.content{padding:20px 24px;min-width:0;background:var(--surf2)}
+.toolbar{background:#fff;border:1px solid #c8d6f0;border-radius:var(--r-lg);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(9,105,218,.08)}
 .tb-title{font-size:14px;font-weight:700;color:#1a3a6e}
-.tb-count{font-size:12px;font-weight:700;background:linear-gradient(135deg,#ddf4ff,#e8f4ff);color:#0550ae;border:1px solid var(–blue-border);padding:2px 10px;border-radius:20px;display:none}
+.tb-count{font-size:12px;font-weight:700;background:linear-gradient(135deg,#ddf4ff,#e8f4ff);color:#0550ae;border:1px solid var(--blue-border);padding:2px 10px;border-radius:20px;display:none}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.btn-stop-toolbar{height:30px;padding:0 12px;border:1px solid var(–red-border);border-radius:var(–r);font-size:12px;font-weight:600;font-family:var(–font);cursor:pointer;background:var(–red-bg);color:var(–red);white-space:nowrap;display:none;transition:.15s}
-.btn-stop-toolbar:hover{background:#ffd4d3}
-.filter-inp{height:30px;padding:0 10px;border:1px solid #b8cce8;border-radius:var(–r);font-size:12px;font-family:var(–font);color:var(–ink);background:#fff;width:180px;display:none}
-.filter-inp:focus{outline:none;border-color:var(–blue);box-shadow:0 0 0 3px rgba(9,105,218,.12)}
-.btn-tool{height:30px;padding:0 12px;border:1px solid #b8cce8;border-radius:var(–r);font-size:12px;font-weight:600;font-family:var(–font);cursor:pointer;background:#fff;color:#3b5998;white-space:nowrap;display:none;transition:.15s}
+.btn-stop-toolbar{height:30px;padding:0 12px;border:1px solid #b91c1c;border-radius:var(--r);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;background:#dc2626;color:#fff;white-space:nowrap;display:none;transition:.15s}
+.btn-stop-toolbar:hover{background:#b91c1c}
+.filter-inp{height:30px;padding:0 10px;border:1px solid #b8cce8;border-radius:var(--r);font-size:12px;font-family:var(--font);color:var(--ink);background:#fff;width:180px;display:none}
+.filter-inp:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(9,105,218,.12)}
+.btn-tool{height:30px;padding:0 12px;border:1px solid #b8cce8;border-radius:var(--r);font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;background:#fff;color:#3b5998;white-space:nowrap;display:none;transition:.15s}
 .btn-tool:hover{background:#eff6ff;border-color:#0969da;color:#0969da}
-.btn-tool.green{border-color:var(–green-border);color:var(–green);background:var(–green-bg)}
+.btn-tool.green{border-color:var(--green-border);color:var(--green);background:var(--green-bg)}
 .btn-tool.green:hover{background:#c6efce;border-color:#1a7f37}
 
-.status{display:none;padding:10px 14px;border-radius:var(–r);font-size:13px;border-left:3px solid;margin-bottom:12px;font-weight:500}
-.status.info{display:block;background:linear-gradient(90deg,#ddf4ff,#f0f8ff);border-color:var(–blue);color:#0550ae}
-.status.ok{display:block;background:linear-gradient(90deg,#dafbe1,#f0fdf4);border-color:var(–green);color:#116329}
-.status.warn{display:block;background:linear-gradient(90deg,#fff8c5,#fffef0);border-color:var(–yellow-border);color:var(–yellow)}
-.status.err{display:block;background:linear-gradient(90deg,#ffebe9,#fff5f5);border-color:var(–red);color:var(–red)}
+.status{display:none;padding:10px 14px;border-radius:var(--r);font-size:13px;border-left:3px solid;margin-bottom:12px;font-weight:500}
+.status.info{display:block;background:linear-gradient(90deg,#ddf4ff,#f0f8ff);border-color:var(--blue);color:#0550ae}
+.status.ok{display:block;background:linear-gradient(90deg,#dafbe1,#f0fdf4);border-color:var(--green);color:#116329}
+.status.warn{display:block;background:linear-gradient(90deg,#fff8c5,#fffef0);border-color:var(--yellow-border);color:var(--yellow)}
+.status.err{display:block;background:linear-gradient(90deg,#ffebe9,#fff5f5);border-color:var(--red);color:var(--red)}
 .prog{font-size:12px;color:#7a94b8;min-height:20px;padding:2px 0 8px}
 
-.tcard{background:#fff;border:1px solid #c8d6f0;border-radius:var(–r-lg);overflow:hidden;box-shadow:0 2px 8px rgba(9,105,218,.06)}
+.tcard{background:#fff;border:1px solid #c8d6f0;border-radius:var(--r-lg);overflow:hidden;box-shadow:0 2px 8px rgba(9,105,218,.06)}
 .tscroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 thead th{padding:9px 12px;text-align:left;white-space:nowrap;background:linear-gradient(180deg,#eef4fc 0%,#e4edf8 100%);border-bottom:2px solid #b8cce8;color:#3b5998;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-tbody td{padding:9px 12px;border-bottom:1px solid #e8f0fa;vertical-align:top;color:var(–ink2)}
+tbody td{padding:9px 12px;border-bottom:1px solid #e8f0fa;vertical-align:top;color:var(--ink2)}
 tbody tr:nth-child(even) td{background:#fafcff}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:#eff6ff!important}
@@ -100,7 +99,7 @@ tbody tr:hover td{background:#eff6ff!important}
 .td-vendor{max-width:150px;word-break:break-word;font-size:12px;color:#57606a}
 .td-amt{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
 .td-date{white-space:nowrap;color:#57606a;font-size:12px}
-.td-link a{color:var(–blue);font-size:12px;text-decoration:none;font-weight:500}
+.td-link a{color:var(--blue);font-size:12px;text-decoration:none;font-weight:500}
 .td-link a:hover{text-decoration:underline;color:#0550ae}
 
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
@@ -116,7 +115,6 @@ tbody tr:hover td{background:#eff6ff!important}
 
 @media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto}}
 </style>
-
 </head>
 <body>
 
@@ -148,70 +146,88 @@ tbody tr:hover td{background:#eff6ff!important}
       </div>
     </div>
 
-```
-<div class="sb-section">
-  <div class="field">
-    <label class="label">年度</label>
-    <select class="inp" id="year">
-      <option value="">全部年度</option>
-      <option value="2026" selected>2026（民國 115）</option>
-      <option value="2025">2025（民國 114）</option>
-      <option value="2024">2024（民國 113）</option>
-      <option value="2023">2023（民國 112）</option>
-      <option value="2022">2022（民國 111）</option>
-      <option value="2021">2021（民國 110）</option>
-    </select>
-  </div>
-  <div class="field">
-    <label class="label">季度</label>
-    <select class="inp" id="quarter">
-      <option value="">不限</option>
-      <option value="Q1">Q1（1–3月）</option>
-      <option value="Q2">Q2（4–6月）</option>
-      <option value="Q3">Q3（7–9月）</option>
-      <option value="Q4">Q4（10–12月）</option>
-    </select>
-  </div>
-</div>
-
-<div class="sb-section">
-  <div class="field">
-    <label class="label">標案狀態</label>
-    <div class="seg" id="atypeSeg">
-      <button class="seg-btn on" data-v="決標公告" onclick="setSeg('atypeSeg',this)">決標</button>
-      <button class="seg-btn" data-v="" onclick="setSeg('atypeSeg',this)">全部</button>
+    <div class="sb-section">
+      <div class="field">
+        <label class="label">年度</label>
+        <select class="inp" id="year">
+          <option value="">全部年度</option>
+          <option value="2026" selected>2026（民國 115）</option>
+          <option value="2025">2025（民國 114）</option>
+          <option value="2024">2024（民國 113）</option>
+          <option value="2023">2023（民國 112）</option>
+          <option value="2022">2022（民國 111）</option>
+          <option value="2021">2021（民國 110）</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="field" style="margin-bottom:0">
+          <label class="label">季度</label>
+          <select class="inp" id="quarter" onchange="onQuarterChange()">
+            <option value="">不限</option>
+            <option value="Q1">Q1（1–3月）</option>
+            <option value="Q2">Q2（4–6月）</option>
+            <option value="Q3">Q3（7–9月）</option>
+            <option value="Q4">Q4（10–12月）</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0" id="monthField">
+          <label class="label">月份</label>
+          <select class="inp" id="month" onchange="onMonthChange()">
+            <option value="">不限</option>
+            <option value="01">1月</option>
+            <option value="02">2月</option>
+            <option value="03">3月</option>
+            <option value="04">4月</option>
+            <option value="05">5月</option>
+            <option value="06">6月</option>
+            <option value="07">7月</option>
+            <option value="08">8月</option>
+            <option value="09">9月</option>
+            <option value="10">10月</option>
+            <option value="11">11月</option>
+            <option value="12">12月</option>
+          </select>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="field">
-    <label class="label">標案種類</label>
-    <div class="seg" id="ttypeSeg">
-      <button class="seg-btn on" data-v="" onclick="setSeg('ttypeSeg',this)">不限</button>
-      <button class="seg-btn" data-v="財物" onclick="setSeg('ttypeSeg',this)">財物</button>
-      <button class="seg-btn" data-v="工程" onclick="setSeg('ttypeSeg',this)">工程</button>
-      <button class="seg-btn" data-v="勞務" onclick="setSeg('ttypeSeg',this)">勞務</button>
+
+    <div class="sb-section">
+      <div class="field">
+        <label class="label">標案狀態</label>
+        <div class="seg" id="atypeSeg">
+          <button class="seg-btn on" data-v="決標公告" onclick="setSeg('atypeSeg',this)">決標</button>
+          <button class="seg-btn" data-v="__other__" onclick="setSeg('atypeSeg',this)">其他</button>
+          <button class="seg-btn" data-v="" onclick="setSeg('atypeSeg',this)">全部</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">標案種類</label>
+        <div class="seg" id="ttypeSeg">
+          <button class="seg-btn on" data-v="" onclick="setSeg('ttypeSeg',this)">不限</button>
+          <button class="seg-btn" data-v="財物" onclick="setSeg('ttypeSeg',this)">財物</button>
+          <button class="seg-btn" data-v="工程" onclick="setSeg('ttypeSeg',this)">工程</button>
+          <button class="seg-btn" data-v="勞務" onclick="setSeg('ttypeSeg',this)">勞務</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label">最多筆數</label>
+        <select class="inp" id="maxn">
+          <option value="20">20 筆</option>
+          <option value="50" selected>50 筆</option>
+          <option value="100">100 筆</option>
+          <option value="200">200 筆</option>
+          <option value="9999">不限</option>
+        </select>
+      </div>
     </div>
-  </div>
-  <div class="field">
-    <label class="label">最多筆數</label>
-    <select class="inp" id="maxn">
-      <option value="20">20 筆</option>
-      <option value="50" selected>50 筆</option>
-      <option value="100">100 筆</option>
-      <option value="200">200 筆</option>
-      <option value="9999">不限</option>
-    </select>
-  </div>
-</div>
 
-<div class="sb-footer">
-  <button class="btn-primary" id="runBtn" onclick="run()">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-    查詢
-  </button>
-  <button class="btn-stop" id="stopBtn" onclick="stopSearch()">■ 中止查詢</button>
-</div>
-```
-
+    <div class="sb-footer">
+      <button class="btn-primary" id="runBtn" onclick="run()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+        查詢
+      </button>
+      <button class="btn-stop" id="stopBtn" onclick="stopSearch()">■ 中止查詢</button>
+    </div>
   </div>
 
   <div class="content">
@@ -234,13 +250,10 @@ tbody tr:hover td{background:#eff6ff!important}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script>
 const API='https://pcc-api.openfun.app/api';
 let allData=[],filteredData=[],shouldStop=false,abortCtrl=null;
 const $=id=>document.getElementById(id);
-
-const SVG_SEARCH='<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>';
 
 const ORG_ALIASES={'台大':'臺灣大學','臺大':'臺灣大學','成大':'成功大學','清大':'清華大學','交大':'陽明交通大學','政大':'政治大學','師大':'師範大學','北大':'臺北大學','中央':'中央大學','中興':'中興大學','東華':'東華大學','高醫':'高雄醫學大學','北醫':'臺北醫學大學','陽明':'陽明大學','輔大':'輔仁大學','東吳':'東吳大學','淡江':'淡江大學','中研院':'中央研究院','台大醫院':'臺灣大學醫學院附設醫院','榮總':'榮民總醫院','台北榮總':'臺北榮民總醫院','高雄榮總':'高雄榮民總醫院','三總':'三軍總醫院','國科會':'國家科學及技術委員會','衛福部':'衛生福利部'};
 
@@ -261,9 +274,21 @@ function setSb(m,t){const b=$('sb');if(!m){b.className='status';b.textContent=''
 function setPg(m){$('pg').textContent=m||'';}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
+// date helpers
 function fmtDate(d){if(!d)return'';const s=String(d);return s.length===8?s.slice(0,4)+'/'+s.slice(4,6)+'/'+s.slice(6,8):s;}
+
+// Quarter ↔ Month mutual exclusion
+function onQuarterChange(){if($('quarter').value)$('month').value='';}
+function onMonthChange(){if($('month').value)$('quarter').value='';}
+
 function getDateRange(year,quarter){
   if(!year)return{qs:'',qe:''};
+  const month=$('month').value;
+  // Month takes priority if set
+  if(month){
+    const lastDay={'01':'31','02':'28','03':'31','04':'30','05':'31','06':'30','07':'31','08':'31','09':'30','10':'31','11':'30','12':'31'};
+    return{qs:year+'-'+month+'-01',qe:year+'-'+month+'-'+lastDay[month]};
+  }
   const qMap={Q1:['01-01','03-31'],Q2:['04-01','06-30'],Q3:['07-01','09-30'],Q4:['10-01','12-31']};
   if(quarter&&qMap[quarter])return{qs:year+'-'+qMap[quarter][0],qe:year+'-'+qMap[quarter][1]};
   return{qs:year+'-01-01',qe:year+'-12-31'};
@@ -296,8 +321,8 @@ function makeRow(rec){
   };
 }
 
-// ── Title search ───────────────────────────────────────────────────
-async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype){
+// ── Title search (API has server-side date filter) ─────────────────
+async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype,atypeOther){
   const ttype=getSegVal('ttypeSeg');
   const dateFrom=toInt(qs),dateTo=toInt(qe);
   const results=[];let page=1;const MAX=60;
@@ -313,6 +338,7 @@ async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype){
       if(dateFrom&&rd<dateFrom)continue;
       if(dateTo&&rd>dateTo)continue;
       if(atype&&rec.brief?.type!==atype)continue;
+      if(atypeOther&&rec.brief?.type==='決標公告')continue; // exclude 決標 when "其他"
       if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype))continue;
       if(!orgMatch(rec.unit_name||'',orgQ))continue;
       results.push(makeRow(rec));
@@ -324,9 +350,8 @@ async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype){
   return results;
 }
 
-// ── Company search ─────────────────────────────────────────────────
-// 修正：pageMaxDate 計算排除 null/0，避免第一頁誤判直接 break
-async function fetchByCompany(co,kwFilter,orgQ,maxn,qs,qe,atype){
+// ── Company search (NO server-side date filter; scan pages; stop when all records on page are older than dateFrom) ─────────────────
+async function fetchByCompany(co,kwFilter,orgQ,maxn,qs,qe,atype,atypeOther){
   const ttype=getSegVal('ttypeSeg');
   const kwL=kwFilter?kwFilter.toLowerCase():'';
   const dateFrom=toInt(qs),dateTo=toInt(qe);
@@ -337,20 +362,19 @@ async function fetchByCompany(co,kwFilter,orgQ,maxn,qs,qe,atype){
     const r=await apiFetch(url);if(!r||!r.ok)break;
     const d=await r.json();if(!d.records?.length)break;
     const recs=d.records;
-    // 只用有效日期（>0）判斷是否已超出範圍，避免 null 造成 Math.max 回傳 0 而誤 break
+    // Stop if the newest record on this whole page is older than our range
     if(dateFrom){
-      const validDates=recs.map(x=>x.date||0).filter(d=>d>0);
-      const pageMaxDate=validDates.length?Math.max(...validDates):Infinity;
+      const pageMaxDate=Math.max(...recs.map(x=>x.date||0));
       if(pageMaxDate<dateFrom)break;
     }
     for(const rec of recs){
       if(results.length>=maxn||shouldStop)break;
       const rd=rec.date||0;
-      if(dateFrom&&rd>0&&rd<dateFrom)continue;
-      if(dateTo&&rd>0&&rd>dateTo)continue;
+      if(dateFrom&&rd<dateFrom)continue;
+      if(dateTo&&rd>dateTo)continue;
       if(atype&&rec.brief?.type!==atype)continue;
+      if(atypeOther&&rec.brief?.type==='決標公告')continue;
       if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype))continue;
-      if(kwL&&!(rec.brief?.title||'').toLowerCase().includes(kwL))continue;
       if(!orgMatch(rec.unit_name||'',orgQ))continue;
       results.push(makeRow(rec));
     }
@@ -415,6 +439,7 @@ function showTools(){
   $('exBtn').style.display='inline-block';
   $('shBtn').style.display='inline-block';
 }
+const SVG_SEARCH='<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>';
 
 // ── Run ────────────────────────────────────────────────────────────
 async function run(){
@@ -434,7 +459,9 @@ async function run(){
 
   const year=$('year').value,quarter=$('quarter').value;
   const maxn=parseInt($('maxn').value)||50;
-  const atype=getSegVal('atypeSeg');
+  const atypeRaw=getSegVal('atypeSeg'); // '決標公告' | '__other__' | ''
+  const atype=atypeRaw==='__other__'?'':atypeRaw; // for API call, pass '' (fetch all)
+  const atypeOther=atypeRaw==='__other__';         // client-side filter flag
   const{qs,qe}=getDateRange(year,quarter);
 
   const parts=[];
@@ -447,13 +474,13 @@ async function run(){
     if(co){
       for(const c of co.split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean)){
         if(shouldStop)break;
-        const batch=await fetchByCompany(c,kw,org,maxn,qs,qe,atype).catch(e=>e.message==='aborted'?[]:[]);
+        const batch=await fetchByCompany(c,kw,org,maxn,qs,qe,atype,atypeOther).catch(e=>e.message==='aborted'?[]:[]);
         allData.push(...batch);renderTable(allData);
       }
     }else{
       for(const k of kw.split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean)){
         if(shouldStop)break;
-        const batch=await fetchByTitle(k,org,maxn,qs,qe,atype).catch(e=>e.message==='aborted'?[]:[]);
+        const batch=await fetchByTitle(k,org,maxn,qs,qe,atype,atypeOther).catch(e=>e.message==='aborted'?[]:[]);
         allData.push(...batch);renderTable(allData);
       }
     }
@@ -550,6 +577,5 @@ function doSheet(){
   btn.disabled=false;btn.textContent='📊 Google Sheet';
 }
 </script>
-
 </body>
 </html>
