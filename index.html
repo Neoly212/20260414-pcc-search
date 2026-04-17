@@ -475,11 +475,13 @@ async function fetchPCCbyCompany(co,kwFilter,orgFilter,maxn,datebegin,dateend){
     const r=await fetchWithRetry(url);if(!r||!r.ok) break;
     const d=await r.json();if(!d.records?.length) break;
 
+    let anyInRange=false;
     for(const rec of d.records){
       if(shouldStop) break pageLoop;
       const rd=rec.date||0;
-      if(dateTo&&rd>dateTo) continue;               // too new, skip
-      if(dateFrom&&rd<dateFrom) break pageLoop;      // too old, stop all
+      if(dateTo&&rd>dateTo) continue;
+      if(dateFrom&&rd<dateFrom) continue;  // skip, don't break — order not guaranteed
+      anyInRange=true;
       if(atype&&rec.brief?.type!==atype) continue;
       if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype)) continue;
       if(kwL&&!(rec.brief?.title||'').toLowerCase().includes(kwL)) continue;
@@ -487,9 +489,13 @@ async function fetchPCCbyCompany(co,kwFilter,orgFilter,maxn,datebegin,dateend){
       results.push(makeRow(rec));
       if(results.length>=maxn) break pageLoop;
     }
+
+    // If all records on this page are older than dateFrom, safe to stop
+    if(!anyInRange && dateFrom && (d.records[d.records.length-1]?.date||0) < dateFrom) break;
+
     if(page>=(d.total_pages||1)) break;
     page++;
-    try{setPg(`廠商搜尋第 ${page} 頁，找到 ${results.length}/${maxn} 筆…`);}catch(e){}
+    try{setPg(`廠商搜尋第 ${page} 頁，找到 ${results.length}/${maxn===9999?'∞':maxn} 筆…`);}catch(e){}
     await sleep(150);
   }
   return results;
