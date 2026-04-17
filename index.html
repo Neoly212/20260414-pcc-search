@@ -326,14 +326,14 @@ async function fetchPCCbyCompany(company, kwFilter, maxn, datebegin, dateend) {
   const results=[];
   let page=1;
   const MAX_PAGES=100;
-  // Parse date range for client-side filtering
   const dateFrom = datebegin ? parseInt(datebegin.replace(/-/g,'')) : 0;
   const dateTo   = dateend   ? parseInt(dateend.replace(/-/g,''))   : 99999999;
   const kwLower  = kwFilter ? kwFilter.toLowerCase() : '';
   const atype    = getSegVal('atypeSeg');
   const ttype    = getSegVal('ttypeSeg');
 
-  while(results.length < maxn && page <= MAX_PAGES){
+  pageLoop:
+  while(page <= MAX_PAGES){
     if(shouldStop) break;
     const url=`${API}/searchbycompanyname?query=${encodeURIComponent(company)}&page=${page}`;
     const r=await fetchWithRetry(url);
@@ -342,23 +342,19 @@ async function fetchPCCbyCompany(company, kwFilter, maxn, datebegin, dateend) {
     if(!d.records?.length) break;
 
     for(const rec of d.records){
-      if(results.length>=maxn||shouldStop) break;
-
-      // Date filter (client-side since API may not support it)
+      if(shouldStop) break pageLoop;
       const recDate = rec.date || 0;
-      if(dateFrom && recDate < dateFrom) continue;
-      if(dateTo   && recDate > dateTo)   { /* dates are sorted desc, could break early */ continue; }
 
-      // Type filters
+      // Records sorted newest-first:
+      // Skip records newer than our range
+      if(dateTo && recDate > dateTo) continue;
+      // Once we see a record older than dateFrom, all future records are also older → stop
+      if(dateFrom && recDate < dateFrom) break pageLoop;
+
       if(atype && rec.brief?.type!==atype) continue;
       const cat=rec.brief?.category||'';
       if(ttype && cat && !cat.includes(ttype)) continue;
-
-      // Keyword double-filter
-      if(kwLower){
-        const title=(rec.brief?.title||'').toLowerCase();
-        if(!title.includes(kwLower)) continue;
-      }
+      if(kwLower && !(rec.brief?.title||'').toLowerCase().includes(kwLower)) continue;
 
       const vendor=(rec.brief?.companies?.names||[]).join('、');
       const jobUrl='https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?querySentence='+encodeURIComponent(rec.job_number||'');
@@ -370,6 +366,8 @@ async function fetchPCCbyCompany(company, kwFilter, maxn, datebegin, dateend) {
         得標廠商:vendor, 決標日期:fmtDate(rec.date),
         來源網址:jobUrl, _tenderUrl:rec.tender_api_url||''
       });
+
+      if(results.length >= maxn) break pageLoop;
     }
 
     if(page>=(d.total_pages||1)) break;
