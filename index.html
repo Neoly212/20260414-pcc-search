@@ -102,6 +102,17 @@ tbody tr:hover td{background:#eff6ff!important}
 .td-link a{color:var(--blue);font-size:12px;text-decoration:none;font-weight:500}
 .td-link a:hover{text-decoration:underline;color:#0550ae}
 
+/* Column filter row */
+.filter-row td.frow{padding:4px 5px;background:#f0f6ff;border-bottom:1px solid #b8cce8}
+.col-filter{width:100%;height:24px;padding:0 4px;border:1px solid #b8cce8;border-radius:4px;font-size:11px;font-family:var(--font);color:var(--ink2);background:#fff;cursor:pointer}
+.col-filter:focus{outline:none;border-color:var(--blue)}
+.range-inp{height:24px;padding:0 4px;border:1px solid #b8cce8;border-radius:4px;font-size:11px;font-family:var(--font);color:var(--ink2);background:#fff}
+.range-inp:focus{outline:none;border-color:var(--blue)}
+.date-inp{height:24px;padding:0 3px;border:1px solid #b8cce8;border-radius:4px;font-size:10px;font-family:var(--font);color:var(--ink2);background:#fff;width:110px}
+.date-inp:focus{outline:none;border-color:var(--blue)}
+.clr-btn{height:24px;padding:0 8px;border:1px solid #fca5a5;border-radius:4px;font-size:11px;font-weight:600;font-family:var(--font);cursor:pointer;background:var(--red-bg);color:var(--red);white-space:nowrap;transition:.15s}
+.clr-btn:hover{background:#ffd4d3}
+
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
 .b-award{background:linear-gradient(135deg,#dafbe1,#c8f5d4);color:#116329;border:1px solid #4ac26b}
 .b-tender{background:linear-gradient(135deg,#ddf4ff,#c8ebff);color:#0550ae;border:1px solid #54aeff}
@@ -453,6 +464,7 @@ async function run(){
   $('stopBtn').style.display='block';$('stopBtn2').style.display='inline-block';
   shouldStop=false;abortCtrl=new AbortController();
   allData=[];filteredData=[];
+  Object.keys(colFilters).forEach(k=>delete colFilters[k]);
   $('tw').innerHTML='<div class="empty"><div class="empty-icon">⏳</div><p>查詢中，請稍候…</p></div>';
   $('fi').style.display='none';$('exBtn').style.display='none';$('shBtn').style.display='none';
   $('cnt').style.display='none';setSb('','');
@@ -522,22 +534,136 @@ function orgHtml(name){
   if(!/[\u4e00-\u9fff]/.test(name))return`<span style="color:#8c959f;font-size:11px;font-style:italic" title="機關代碼，無中文名稱">${name}</span>`;
   return name;
 }
-function renderTable(data){
+// ── Sort & filter state ───────────────────────────────────
+const colFilters = {};
+let sortKey = '_date', sortDir = -1;
+
+function sortData(data){
+  return [...data].sort((a,b)=>{
+    if(sortKey==='_date') return ((a._dateNum||0)-(b._dateNum||0))*sortDir;
+    if(['_budget','_award','_base'].includes(sortKey)) return ((parseInt(a[sortKey])||0)-(parseInt(b[sortKey])||0))*sortDir;
+    return (a[sortKey]||'').localeCompare(b[sortKey]||'','zh-TW')*sortDir;
+  });
+}
+
+function applyAll(){
+  let data = allData;
+  const txt = $('fi').value.toLowerCase();
+  if(txt) data = data.filter(r=>JSON.stringify(r).toLowerCase().includes(txt));
+  for(const [k,v] of Object.entries(colFilters)){
+    if(!v) continue;
+    if(typeof v==='object'){
+      data = data.filter(r=>{
+        const n = k==='_date'?(r._dateNum||0):(parseInt(r[k])||0);
+        if(v.min && n < v.min) return false;
+        if(v.max && n > v.max) return false;
+        return true;
+      });
+    } else {
+      data = data.filter(r=>(r[k]||'').includes(v));
+    }
+  }
+  filteredData = sortData(data);
+  renderTable(filteredData, true);
+}
+
+function setSort(k){
+  if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=-1; }
+  applyAll();
+}
+function setColFilter(k,v){
+  if(v) colFilters[k]=v; else delete colFilters[k];
+  applyAll();
+}
+function setRangeFilter(k,minV,maxV){
+  const min=minV?parseInt(minV.replace(/,/g,'')):0;
+  const max=maxV?parseInt(maxV.replace(/,/g,'')):0;
+  if(min||max) colFilters[k]={min,max}; else delete colFilters[k];
+  applyAll();
+}
+function setDateFilter(minD,maxD){
+  const min=minD?parseInt(minD.replace(/-/g,'')):0;
+  const max=maxD?parseInt(maxD.replace(/-/g,'')):0;
+  if(min||max) colFilters['_date']={min,max}; else delete colFilters['_date'];
+  applyAll();
+}
+function clearColFilters(){
+  Object.keys(colFilters).forEach(k=>delete colFilters[k]);
+  document.querySelectorAll('.col-filter,.range-inp,.date-inp').forEach(el=>el.value='');
+  applyAll();
+}
+function doFilter(){ applyAll(); }
+
+const DROP_COLS = new Set(['_type','_org','_method1','_method2','_vendor']);
+const RANGE_COLS = new Set(['_budget','_award','_base']);
+
+function getUniqueVals(k){
+  return [...new Set(allData.map(r=>r[k]||'').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-TW'));
+}
+function sortIcon(k){
+  if(sortKey!==k) return '<span style="opacity:.25;font-size:9px">⇅</span>';
+  return `<span style="color:#0969da;font-size:11px">${sortDir===-1?'↓':'↑'}</span>`;
+}
+
+function renderTable(data, skipControls){
   const c=$('cnt');
   if(data.length){c.textContent=data.length+' 筆';c.style.display='inline-flex';}
   else c.style.display='none';
   if(!data.length){$('tw').innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>無符合資料</p></div>';return;}
+
   let h='<table><thead><tr>';
-  COLS.forEach(col=>{h+=`<th style="min-width:${col.w}">${col.l}</th>`;});
-  h+='<th>連結</th></tr></thead><tbody>';
+  COLS.forEach(col=>{
+    h+=`<th style="min-width:${col.w};cursor:pointer;user-select:none" onclick="setSort('${col.k}')">${col.l} ${sortIcon(col.k)}</th>`;
+  });
+  h+='<th>連結</th></tr>';
+
+  if(!skipControls && allData.length){
+    h+='<tr class="filter-row">';
+    COLS.forEach(col=>{
+      if(DROP_COLS.has(col.k)){
+        const vals=getUniqueVals(col.k);
+        const cur=typeof colFilters[col.k]==='string'?colFilters[col.k]:'';
+        let sel=`<select class="col-filter" onchange="setColFilter('${col.k}',this.value)"><option value="">全部</option>`;
+        vals.forEach(v=>{
+          const lbl=col.k==='_type'?v.replace('公告',''):(v.length>12?v.slice(0,12)+'…':v);
+          sel+=`<option value="${v}"${cur===v?' selected':''}>${lbl}</option>`;
+        });
+        sel+='</select>';
+        h+=`<td class="frow">${sel}</td>`;
+      } else if(RANGE_COLS.has(col.k)){
+        const cur=colFilters[col.k]||{};
+        h+=`<td class="frow" style="white-space:nowrap">
+          <input class="range-inp" placeholder="≥" value="${cur.min||''}" style="width:52px"
+            onchange="setRangeFilter('${col.k}',this.value,this.closest('td').querySelector('.rmax').value)">
+          <input class="range-inp rmax" placeholder="≤" value="${cur.max||''}" style="width:52px"
+            onchange="setRangeFilter('${col.k}',this.closest('td').querySelector('.range-inp:not(.rmax)').value,this.value)">
+        </td>`;
+      } else if(col.k==='_date'){
+        const cur=colFilters['_date']||{};
+        const toDs=n=>n?String(n).replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'):'';
+        h+=`<td class="frow" style="white-space:nowrap">
+          <input type="date" class="date-inp" value="${toDs(cur.min||0)}" title="開始日期"
+            onchange="setDateFilter(this.value,this.closest('td').querySelector('.dend').value)">
+          <input type="date" class="date-inp dend" value="${toDs(cur.max||0)}" title="結束日期"
+            onchange="setDateFilter(this.closest('td').querySelector('.date-inp:not(.dend)').value,this.value)">
+        </td>`;
+      } else {
+        h+=`<td class="frow"></td>`;
+      }
+    });
+    h+=`<td class="frow"><button class="clr-btn" onclick="clearColFilters()" title="清除所有篩選">✕</button></td>`;
+    h+='</tr>';
+  }
+  h+='</thead><tbody>';
+
   data.forEach(r=>{
     h+='<tr>';
     COLS.forEach(col=>{
       const cls=col.cls?` class="${col.cls}"`:'';
-      if(col.k==='_type')h+=`<td>${badgeHtml(r._type)}</td>`;
-      else if(col.k==='_org')h+=`<td class="td-org">${orgHtml(r._org)}</td>`;
-      else if(col.amt)h+=`<td class="td-amt">${r[col.k]?parseInt(r[col.k]).toLocaleString():''}</td>`;
-      else h+=`<td${cls}>${r[col.k]||''}</td>`;
+      if(col.k==='_type')     h+=`<td>${badgeHtml(r._type)}</td>`;
+      else if(col.k==='_org') h+=`<td class="td-org">${orgHtml(r._org)}</td>`;
+      else if(col.amt)        h+=`<td class="td-amt">${r[col.k]?parseInt(r[col.k]).toLocaleString():''}</td>`;
+      else                    h+=`<td${cls}>${r[col.k]||''}</td>`;
     });
     h+=`<td class="td-link"><a href="${r._url}" target="_blank">檢視 ↗</a></td>`;
     h+='</tr>';
@@ -546,11 +672,6 @@ function renderTable(data){
   $('tw').innerHTML=h;
 }
 
-function doFilter(){
-  const kw=$('fi').value.toLowerCase();
-  filteredData=kw?allData.filter(r=>JSON.stringify(r).toLowerCase().includes(kw)):[...allData];
-  renderTable(filteredData);
-}
 
 function doExcel(){
   if(!filteredData.length)return;
