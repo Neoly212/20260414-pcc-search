@@ -350,7 +350,7 @@ async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype,atypeOther){
       if(dateTo&&rd>dateTo)continue;
       if(atype&&rec.brief?.type!==atype)continue;
       if(atypeOther&&rec.brief?.type==='決標公告')continue; // exclude 決標 when "其他"
-      if(ttype&&!(rec.brief?.category||'').includes(ttype))continue;
+      if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype))continue;
       if(!orgMatch(rec.unit_name||'',orgQ))continue;
       results.push(makeRow(rec));
     }
@@ -385,7 +385,7 @@ async function fetchByCompany(co,kwFilter,orgQ,maxn,qs,qe,atype,atypeOther){
       if(dateTo&&rd>dateTo)continue;
       if(atype&&rec.brief?.type!==atype)continue;
       if(atypeOther&&rec.brief?.type==='決標公告')continue;
-      if(ttype&&!(rec.brief?.category||'').includes(ttype))continue;
+      if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype))continue;
       if(!orgMatch(rec.unit_name||'',orgQ))continue;
       results.push(makeRow(rec));
     }
