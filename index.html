@@ -343,17 +343,21 @@ async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype,atypeOther){
     if(qs)url+=`&datebegin=${qs}&dateend=${qe}`;
     const r=await apiFetch(url);if(!r||!r.ok)break;
     const d=await r.json();if(!d.records?.length)break;
+    // Debug log
+    if(page===1) console.log('[Debug] Page 1:', d.total_records,'total records, dateFrom:',dateFrom,'dateTo:',dateTo,'atype:',atype,'ttype:',ttype, 'sample types:', d.records.slice(0,5).map(r=>({date:r.date,type:r.brief?.type,cat:r.brief?.category?.slice(0,20)})));
+    let filtered={date:0,type:0,ttype:0,org:0,pass:0};
     for(const rec of d.records){
       if(results.length>=maxn||shouldStop)break;
       const rd=rec.date||0;
-      if(dateFrom&&rd<dateFrom)continue;
-      if(dateTo&&rd>dateTo)continue;
-      if(atype&&rec.brief?.type!==atype)continue;
-      if(atypeOther&&rec.brief?.type==='決標公告')continue; // exclude 決標 when "其他"
-      if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype))continue;
-      if(!orgMatch(rec.unit_name||'',orgQ))continue;
-      results.push(makeRow(rec));
+      if(dateFrom&&rd<dateFrom){filtered.date++;continue;}
+      if(dateTo&&rd>dateTo){filtered.date++;continue;}
+      if(atype&&rec.brief?.type!==atype){filtered.type++;continue;}
+      if(atypeOther&&rec.brief?.type==='決標公告'){filtered.type++;continue;}
+      if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype)){filtered.ttype++;continue;}
+      if(!orgMatch(rec.unit_name||'',orgQ)){filtered.org++;continue;}
+      filtered.pass++;results.push(makeRow(rec));
     }
+    if(page===1) console.log('[Debug] Page 1 filter result:', filtered);
     if(page>=(d.total_pages||1))break;
     page++;setPg(`搜尋第 ${page} 頁，已找到 ${results.length} 筆…`);
     await sleep(150);
@@ -501,9 +505,13 @@ async function run(){
       }
     }
     const toEnrich=allData.filter(r=>r._turl&&r._type==='決標公告');
+    console.log('[Enrich Debug] allData.length:',allData.length,'toEnrich.length:',toEnrich.length);
+    console.log('[Enrich Debug] sample _turl:', allData[0]?._turl, '| _type:', allData[0]?._type);
     if(toEnrich.length){
       setSb(`已取得 ${allData.length} 筆，補充詳細資料（${toEnrich.length} 筆）…`,'info');
       await enrich(allData);
+    } else {
+      console.warn('[Enrich Debug] Skipped! No rows with _turl+決標公告');
     }
     filteredData=[...allData];renderTable(filteredData);
     setSb(`查詢完成，共 ${allData.length} 筆`,'ok');setPg('');showTools();
