@@ -350,7 +350,7 @@ async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype,atypeOther){
       if(dateTo&&rd>dateTo)continue;
       if(atype&&rec.brief?.type!==atype)continue;
       if(atypeOther&&rec.brief?.type==='決標公告')continue; // exclude 決標 when "其他"
-      if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype))continue;
+      if(ttype&&!(rec.brief?.category||'').includes(ttype))continue;
       if(!orgMatch(rec.unit_name||'',orgQ))continue;
       results.push(makeRow(rec));
     }
@@ -385,7 +385,7 @@ async function fetchByCompany(co,kwFilter,orgQ,maxn,qs,qe,atype,atypeOther){
       if(dateTo&&rd>dateTo)continue;
       if(atype&&rec.brief?.type!==atype)continue;
       if(atypeOther&&rec.brief?.type==='決標公告')continue;
-      if(ttype&&rec.brief?.category&&!rec.brief.category.includes(ttype))continue;
+      if(ttype&&!(rec.brief?.category||'').includes(ttype))continue;
       if(!orgMatch(rec.unit_name||'',orgQ))continue;
       results.push(makeRow(rec));
     }
@@ -487,13 +487,17 @@ async function run(){
       for(const c of co.split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean)){
         if(shouldStop)break;
         const batch=await fetchByCompany(c,kw,org,maxn,qs,qe,atype,atypeOther).catch(e=>e.message==='aborted'?[]:[]);
-        allData.push(...batch);renderTable(allData);
+        allData.push(...batch);
+        if(allData.length>maxn)allData=allData.slice(0,maxn);
+        renderTable(allData);
       }
     }else{
       for(const k of kw.split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean)){
         if(shouldStop)break;
         const batch=await fetchByTitle(k,org,maxn,qs,qe,atype,atypeOther).catch(e=>e.message==='aborted'?[]:[]);
-        allData.push(...batch);renderTable(allData);
+        allData.push(...batch);
+        if(allData.length>maxn)allData=allData.slice(0,maxn);
+        renderTable(allData);
       }
     }
     const toEnrich=allData.filter(r=>r._turl&&r._type==='決標公告');
