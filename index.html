@@ -327,7 +327,7 @@ function makeRow(rec){
     _title:rec.brief?.title||'',_vendor:(rec.brief?.companies?.names||[]).join('、'),
     _date:fmtDate(rec.date),_dateNum:rec.date||0,
     _url:'https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion?querySentence='+encodeURIComponent(rec.job_number||''),
-    _turl:rec.tender_api_url||'',
+    _turl:(rec.tender_api_url||'').replace('http://','https://'),
     _method1:'',_method2:'',_budget:'',_award:'',_base:''
   };
 }
