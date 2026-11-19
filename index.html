@@ -31,6 +31,10 @@ body{font-family:var(--font);background:var(--surf2);color:var(--ink);line-heigh
 .logo-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#fff 0%,#ddf4ff 100%);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#0969da;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.2)}
 .logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:-.01em}
 .logo-sub{color:rgba(255,255,255,.55);font-size:12px;margin-left:auto}
+.site-nav{display:flex;align-items:center;gap:6px;margin-left:auto;white-space:nowrap}
+.site-nav a{padding:6px 10px;border-radius:6px;color:#e4f0ff;text-decoration:none;font-size:13px}
+.site-nav a[aria-current],.site-nav a:hover{background:#ffffff26;color:white}
+@media(max-width:850px){.logo-sub{display:none}}
 
 .layout{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 56px)}
 
@@ -134,6 +138,7 @@ tbody tr:hover td{background:#eff6ff!important}
     <div class="logo-mark">採</div>
     <span class="logo-text">採購情報系統</span>
   </a>
+  <nav class="site-nav" aria-label="採購查詢"><a href="./" aria-current="page">決標查詢</a><a href="./tenders.html">招標追蹤</a></nav>
   <span class="logo-sub">Taiwan Government Procurement Intelligence</span>
 </div>
 
@@ -264,6 +269,7 @@ tbody tr:hover td{background:#eff6ff!important}
 <script>
 const API='https://pcc-api.openfun.app/api';
 let allData=[],filteredData=[],shouldStop=false,abortCtrl=null;
+const searchWarnings = new Set();
 const $=id=>document.getElementById(id);
 
 const ORG_ALIASES={'台大':'臺灣大學','臺大':'臺灣大學','成大':'成功大學','清大':'清華大學','交大':'陽明交通大學','政大':'政治大學','師大':'師範大學','北大':'臺北大學','中央':'中央大學','中興':'中興大學','東華':'東華大學','高醫':'高雄醫學大學','北醫':'臺北醫學大學','陽明':'陽明大學','輔大':'輔仁大學','東吳':'東吳大學','淡江':'淡江大學','中研院':'中央研究院','台大醫院':'臺灣大學醫學院附設醫院','榮總':'榮民總醫院','台北榮總':'臺北榮民總醫院','高雄榮總':'高雄榮民總醫院','三總':'三軍總醫院','國科會':'國家科學及技術委員會','衛福部':'衛生福利部'};
@@ -321,6 +327,23 @@ async function apiFetch(url,retries=2){
   }
 }
 
+// Keep successful pages if a later page is unavailable.
+async function readSearchPage(url){
+  try{
+    const response=await apiFetch(url);
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const page=await response.json();
+    if(!Array.isArray(page.records)){
+      if(Number(page.total_records)===0 && page.total_records!=null)return {records:[]};
+      throw new Error('公告清單格式無法辨識');
+    }
+    return page;
+  }catch(error){
+    if(!shouldStop)searchWarnings.add(error instanceof TypeError?'無法連線至資料來源':error.message);
+    return null;
+  }
+}
+
 function makeRow(rec){
   return{
     _type:rec.brief?.type||'',_org:rec.unit_name||'',_no:rec.job_number||'',
@@ -341,8 +364,7 @@ async function fetchByTitle(kw,orgQ,maxn,qs,qe,atype,atypeOther){
     if(shouldStop)break;
     let url=`${API}/searchbytitle?query=${encodeURIComponent(kw)}&page=${page}`;
     if(qs)url+=`&datebegin=${qs}&dateend=${qe}`;
-    const r=await apiFetch(url);if(!r||!r.ok)break;
-    const d=await r.json();if(!d.records?.length)break;
+    const d=await readSearchPage(url);if(!d?.records.length)break;
     // Debug log
     if(page===1) console.log('[Debug] Page 1:', d.total_records,'total records, dateFrom:',dateFrom,'dateTo:',dateTo,'atype:',atype,'ttype:',ttype, 'sample types:', d.records.slice(0,5).map(r=>({date:r.date,type:r.brief?.type,cat:r.brief?.category?.slice(0,20)})));
     let filtered={date:0,type:0,ttype:0,org:0,pass:0};
@@ -374,8 +396,7 @@ async function fetchByCompany(co,kwFilter,orgQ,maxn,qs,qe,atype,atypeOther){
   while(results.length<maxn&&page<=MAX){
     if(shouldStop)break;
     const url=`${API}/searchbycompanyname?query=${encodeURIComponent(co)}&page=${page}`;
-    const r=await apiFetch(url);if(!r||!r.ok)break;
-    const d=await r.json();if(!d.records?.length)break;
+    const d=await readSearchPage(url);if(!d?.records.length)break;
     const recs=d.records;
     // Stop if the newest record on this whole page is older than our range
     if(dateFrom){
@@ -444,7 +465,7 @@ async function enrich(rows){
 function stopSearch(){
   shouldStop=true;if(abortCtrl)abortCtrl.abort();
   $('stopBtn').style.display='none';$('stopBtn2').style.display='none';
-  $('runBtn').disabled=false;$('runBtn').innerHTML=SVG_SEARCH+' 查詢';
+  $('runBtn').disabled=true;
   setSb(`已中止，共取得 ${allData.length} 筆`,'warn');setPg('');
   filteredData=[...allData];renderTable(filteredData);showTools();
 }
@@ -466,7 +487,7 @@ async function run(){
   const btn=$('runBtn');
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> 查詢中…';
   $('stopBtn').style.display='block';$('stopBtn2').style.display='inline-block';
-  shouldStop=false;abortCtrl=new AbortController();
+  shouldStop=false;searchWarnings.clear();abortCtrl=new AbortController();
   allData=[];filteredData=[];
   Object.keys(colFilters).forEach(k=>delete colFilters[k]);
   $('tw').innerHTML='<div class="empty"><div class="empty-icon">⏳</div><p>查詢中，請稍候…</p></div>';
@@ -490,7 +511,7 @@ async function run(){
     if(co){
       for(const c of co.split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean)){
         if(shouldStop)break;
-        const batch=await fetchByCompany(c,kw,org,maxn,qs,qe,atype,atypeOther).catch(e=>e.message==='aborted'?[]:[]);
+        const batch=await fetchByCompany(c,kw,org,maxn,qs,qe,atype,atypeOther);
         allData.push(...batch);
         if(allData.length>maxn)allData=allData.slice(0,maxn);
         renderTable(allData);
@@ -498,7 +519,7 @@ async function run(){
     }else{
       for(const k of kw.split(/[,，\s]+/).map(s=>s.trim()).filter(Boolean)){
         if(shouldStop)break;
-        const batch=await fetchByTitle(k,org,maxn,qs,qe,atype,atypeOther).catch(e=>e.message==='aborted'?[]:[]);
+        const batch=await fetchByTitle(k,org,maxn,qs,qe,atype,atypeOther);
         allData.push(...batch);
         if(allData.length>maxn)allData=allData.slice(0,maxn);
         renderTable(allData);
@@ -514,7 +535,10 @@ async function run(){
       console.warn('[Enrich Debug] Skipped! No rows with _turl+決標公告');
     }
     filteredData=[...allData];renderTable(filteredData);
-    setSb(`查詢完成，共 ${allData.length} 筆`,'ok');setPg('');showTools();
+    if(shouldStop)setSb('已中止，共取得 '+allData.length+' 筆','warn');
+    else if(searchWarnings.size)setSb('資料來源未完整讀取（'+[...searchWarnings].join('、')+'），目前取得 '+allData.length+' 筆。','warn');
+    else setSb('查詢完成，共 '+allData.length+' 筆','ok');
+    setPg('');showTools();
   }catch(e){if(e.message!=='aborted')setSb('錯誤：'+e.message,'err');}
 
   $('stopBtn').style.display='none';$('stopBtn2').style.display='none';

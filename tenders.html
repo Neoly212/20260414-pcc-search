@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173967">
+  <title>招標追蹤｜採購情報系統</title>
+  <link rel="stylesheet" href="./tenders.css">
+  <script type="module" src="./tenders.js"></script>
+</head>
+<body>
+  <header class="top"><div class="top-inner">
+    <a class="brand" href="./"><span>採</span>採購情報系統</a>
+    <nav aria-label="採購查詢"><a href="./">決標查詢</a><a href="./tenders.html" aria-current="page">招標追蹤</a></nav>
+  </div></header>
+  <main>
+    <div class="intro">
+      <div><h1>財物招標追蹤</h1><p>依生命科學儀器、試劑與耗材初篩。案名籠統的採購案會保留供查看。</p></div>
+      <a class="text-link" href="https://web.pcc.gov.tw/prkms/tender/common/basic/indexTenderBasic" target="_blank" rel="noopener">官方查詢（可選等標期內） ↗</a>
+    </div>
+    <section class="source" aria-label="取得公告">
+      <form id="query">
+        <label>公告日期<input id="day" type="date" required></label>
+        <label>查詢範圍<select id="span">
+          <option value="1">所選當日</option>
+          <option value="3">截至所選日的 3 天</option>
+          <option value="7">截至所選日的 7 天</option>
+        </select></label>
+        <button id="fetch-btn" class="primary" type="submit">讀取公告</button>
+        <button id="cancel-btn" type="button" hidden>停止</button>
+      </form>
+      <details id="manual">
+        <summary>匯入招標清單</summary>
+        <p>貼上含表頭的試算表，或選擇 CSV、TSV。必填欄位為「標案名稱、機關名稱、公告日期」。也可帶入案號、標的分類、截止投標、預算金額及官方連結。若清單省略公告類型，請只匯入招標公告。</p>
+        <div class="import-row"><label>選取檔案<input id="file" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values"></label>
+          <a href="https://bidscan.tw/search" target="_blank" rel="noopener">可匯出 CSV 的標案查詢 ↗</a></div>
+        <label>貼上清單<textarea id="paste" rows="3" placeholder="請連同第一列表頭貼上"></textarea></label>
+        <button id="import-btn" type="button">套用清單</button>
+      </details>
+    </section>
+    <div id="status" role="status" aria-live="polite">選擇公告日期讀取，或匯入已有的招標清單。</div>
+    <section class="results" aria-label="招標結果">
+      <div class="results-head"><h2>案件清單</h2><button id="export-btn" disabled>匯出目前結果 CSV</button></div>
+      <div class="filters">
+        <div class="tabs" id="tiers" role="group" aria-label="相關程度">
+          <button data-tier="all" aria-pressed="true">保留案件 <span></span></button>
+          <button data-tier="priority" aria-pressed="false">優先看 <span></span></button>
+          <button data-tier="review" aria-pressed="false">待看明細 <span></span></button>
+          <button data-tier="excluded" aria-pressed="false">明確無關 <span></span></button>
+        </div>
+        <div class="filter-line">
+          <label>縮小結果<input type="search" id="search" placeholder="案名、案號、機關或品項"></label>
+          <label>投標期限<select id="validity"><option value="possible">未截止與期限待查</option><option value="open">已知未截止</option><option value="all">含已截止</option></select></label>
+        </div>
+      </div>
+      <p id="count" class="count"></p>
+      <div id="rows" aria-label="標案列表"></div>
+      <div id="more-wrap" hidden><button id="more">顯示更多案件</button></div>
+    </section>
+    <footer>公告資料來源為政府電子採購網，由 <a href="https://pcc-api.openfun.app/" target="_blank" rel="noopener">OpenFun 公開 API</a> 彙整。分類、截止時間及規格以機關最新公告為準。</footer>
+  </main>
+</body>
+</html>
