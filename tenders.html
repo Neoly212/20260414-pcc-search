@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#173967">
   <title>招標追蹤｜採購情報系統</title>
   <link rel="stylesheet" href="./tenders.css">
-  <script type="module" src="./tenders.js"></script>
+  <script type="module" src="./tenders.js?v=20261119-2"></script>
 </head>
 <body>
   <header class="top"><div class="top-inner">
@@ -15,7 +15,7 @@
   </div></header>
   <main>
     <div class="intro">
-      <div><h1>財物招標追蹤</h1><p>依生命科學儀器、試劑與耗材初篩。案名籠統的採購案會保留供查看。</p></div>
+      <div><h1>財物招標追蹤</h1><p>先看與生命科學儀器、試劑或耗材相關的案件。案名線索不足的可在「其他待判」查找。</p></div>
       <a class="text-link" href="https://web.pcc.gov.tw/prkms/tender/common/basic/indexTenderBasic" target="_blank" rel="noopener">官方查詢（可選等標期內） ↗</a>
     </div>
     <section class="source" aria-label="取得公告">
@@ -43,9 +43,10 @@
       <div class="results-head"><h2>案件清單</h2><button id="export-btn" disabled>匯出目前結果 CSV</button></div>
       <div class="filters">
         <div class="tabs" id="tiers" role="group" aria-label="相關程度">
-          <button data-tier="all" aria-pressed="true">保留案件 <span></span></button>
+          <button data-tier="focus" aria-pressed="true">建議先看 <span></span></button>
           <button data-tier="priority" aria-pressed="false">優先看 <span></span></button>
           <button data-tier="review" aria-pressed="false">待看明細 <span></span></button>
+          <button data-tier="unclear" aria-pressed="false">其他待判 <span></span></button>
           <button data-tier="excluded" aria-pressed="false">明確無關 <span></span></button>
         </div>
         <div class="filter-line">

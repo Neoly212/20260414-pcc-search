@@ -3,6 +3,7 @@ const text = value => String(value ?? '').trim();
 const flat = value => text(value).normalize('NFKC').toLowerCase().replace(/\s+/g, '');
 export const pcc = 'https://web.pcc.gov.tw/prkms/tender/common/basic/indexTenderBasic';
 export const api = 'https://pcc-api.openfun.app/api/';
+export const tierLabels = {priority:'優先看', review:'待看明細', unclear:'其他待判', excluded:'明確無關'};
 
 export function taipeiDay(now = new Date()) {
   return new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit'}).format(now);
@@ -78,16 +79,25 @@ const products = [
   ['厭氧培養', /(?:厭氧|低氧).{0,6}(?:操作台|工作站|培養系統|培養箱)/u],
   ['品牌或產品系列', /bio[-\s]?rad|zeiss|cytek|shimadzu|nichiryo|nanocellect|don\s*whitley|(?:^|[^a-z])integra(?:[^a-z]|$)|蔡司|島津|viaflo|assist\s*plus/iu]
 ];
-const possible = /實驗室|檢驗|試劑|實驗.{0,5}(?:耗材|儀器|設備)|研究(?:儀器|用設備)|醫療儀器|醫療設備|生物科技|生物技術|分子生物|細胞|螢光|蛋白|核酸|檢測儀|影像分析|光譜|分光|光度計|耗材一批|檢驗科|病理科/u;
-const unrelated = /辦公(?:桌椅|家具|傢俱)|課桌椅|廚房餐具|團膳|午餐食材|膳食|伙食|便當|食用米|制服|球衣|運動服|軍服|防彈背心|影印紙|衛生紙|公務(?:汽車|機車|車輛|車租賃)|巡邏車|消防車|汽車輪胎|道路瀝青|道路標線|垃圾車|資源回收車|柴油採購|航空機票|禮券|紅包袋|路燈燈具|體育器材|籃球架|交通號誌|監視錄影系統|印表機碳粉|列車煞車/u;
+const possible = /實驗室|試劑|檢驗(?:科|用|儀器|設備|耗材)|醫事檢驗|實驗.{0,5}(?:耗材|儀器|設備)|研究(?:儀器|用設備)|醫療(?:儀器|設備)|生物科技|生物技術|分子生物|細胞|螢光|蛋白|核酸|檢測儀|影像分析|光譜|分光|光度計|病理科/u;
+const researchBuyer = /大學|學院|醫院|衛生|疾病管制|研究|試驗|實驗|檢驗|防疫|畜產|種苗/u;
+const genericEquipment = /(?:儀器|設備|耗材|醫材|衛材|器材)(?:集中採購|採購|乙批|一批|等?[共計]?[一二三四五六七八九十\d]+[項組套類批]|$)/u;
+const clinicalMicroscope = /(?:手術|開刀房|眼科).{0,12}顯微鏡|顯微鏡.{0,8}(?:手術|開刀房)/u;
+const unrelated = /辦公(?:桌椅|家具|傢俱)|課桌椅|廚房餐具|團膳|午餐食材|膳食|伙食|便當|食用米|制服|球衣|運動服|軍服|防彈背心|影印紙|衛生紙|公務(?:汽車|機車|車輛|車租賃)|巡邏車|消防車|汽車輪胎|道路瀝青|道路標線|垃圾車|資源回收車|柴油採購|航空機票|禮券|紅包袋|路燈燈具|體育器材|籃球架|交通號誌|監視錄影系統|印表機碳粉|列車煞車|噴水推進器|(?:船舶|船艇|巡防艇|艦艇).{0,10}(?:塢修|大修)|教科(?:用)?書|營養午餐|冷氣機汰換|割草機|遊覽車租賃/u;
 
 export function classify(row) {
   const label = [row.title, row.items].join(' ').normalize('NFKC');
   const matches = products.filter(([, pattern]) => pattern.test(label)).map(([name]) => name);
+  if (clinicalMicroscope.test(label) && matches.every(name => name === '顯微影像' || name === '品牌或產品系列')) {
+    return {tier:'review', why:'手術用顯微設備，請確認醫療產品線與服務授權', rank:1};
+  }
   if (matches.length) return {tier:'priority', why:matches.join('、'), rank:0};
   if (possible.test(label)) return {tier:'review', why:'可能包含實驗室品項，請查看分項或規格', rank:1};
-  if (unrelated.test(label)) return {tier:'excluded', why:'標的用途明確，與實驗室產品線關聯低', rank:3};
-  return {tier:'review', why:'案名不足以排除，請查看公告', rank:2};
+  if (unrelated.test(label)) return {tier:'excluded', why:'標的用途明確，與實驗室產品線關聯低', rank:4};
+  if (researchBuyer.test([row.org,row.dept].join(' ')) && genericEquipment.test(label.trim())) {
+    return {tier:'review', why:'採購單位可能使用實驗室設備，案名未列具體品項', rank:2};
+  }
+  return {tier:'unclear', why:'案名沒有足夠線索，保留供查找', rank:3};
 }
 
 export function caseKey(row) {
@@ -195,6 +205,6 @@ export function csvFor(rows) {
     if (/^[=+@\-\t\r]/.test(str)) str = "'" + str;
     return '"' + str.replace(/"/g,'""') + '"';
   };
-  const header = ['公告日期','機關名稱','標案案號','標案名稱','公告類型','標的分類','截止投標','預算金額','篩選依據','官方連結'];
-  return '\uFEFF' + [header, ...rows.map(row => fields.map(k => row[k]))].map(cells => cells.map(escape).join(',')).join('\r\n');
+  const header = ['公告日期','機關名稱','標案案號','標案名稱','公告類型','標的分類','截止投標','預算金額','篩選依據','官方連結','相關程度'];
+  return '\uFEFF' + [header, ...rows.map(row => [...fields.map(k => row[k]), tierLabels[row.tier]])].map(cells => cells.map(escape).join(',')).join('\r\n');
 }

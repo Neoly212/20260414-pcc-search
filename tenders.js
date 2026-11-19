@@ -1,10 +1,9 @@
-import {api, casesFrom, csvFor, dateText, dayOffset, importTable, normalize, officialUrl, taipeiDay, versionKey} from './tender-data.js';
+import {api, casesFrom, csvFor, dateText, dayOffset, importTable, normalize, officialUrl, taipeiDay, tierLabels, versionKey} from './tender-data.js?v=20261119-2';
 
 const byId = id => document.getElementById(id);
-const labels = {priority:'優先看', review:'待看明細', excluded:'明確無關'};
 const cacheKey = 'pcc-tenders-last-v1';
 const perPage = 40;
-let notices = [], filtered = [], tier = 'all', limit = perPage;
+let notices = [], filtered = [], tier = 'focus', limit = perPage;
 let description = '', loaded = false, activeQuery = null, revision = 0, pastedTable = null, lastLiveAt = 0;
 const detailState = new Map();
 
@@ -134,7 +133,7 @@ async function readDetails(row) {
 function caseCard(row) {
   const card = node('article', undefined, 'case'), main = node('div', undefined, 'main-info'), meta = node('div', undefined, 'meta');
   const tags = node('div', undefined, 'tags');
-  tags.append(node('span', labels[row.tier], 'tag ' + row.tier));
+  tags.append(node('span', tierLabels[row.tier], 'tag ' + row.tier));
   tags.append(node('span', /財物/.test(row.category) ? '財物' : '採購性質待查', 'tag'));
   main.append(tags, node('h3',row.title), node('p',[row.org, row.dept, row.job].filter(Boolean).join(' · ')), node('small',row.why));
   const links = node('div', undefined, 'case-links');
@@ -174,7 +173,7 @@ function render() {
     if (validity === 'possible' && row.state === '已截止') return false;
     return !term || [row.title,row.org,row.job,row.why,row.items].join(' ').toLowerCase().replaceAll('台','臺').includes(term);
   });
-  const subset = (row, id) => id === 'all' ? row.tier !== 'excluded' : row.tier === id;
+  const subset = (row, id) => id === 'focus' ? row.tier === 'priority' || row.tier === 'review' : row.tier === id;
   for (const btn of byId('tiers').querySelectorAll('button')) {
     btn.setAttribute('aria-pressed', String(btn.dataset.tier === tier));
     btn.querySelector('span').textContent = loaded ? String(items.filter(r => subset(r, btn.dataset.tier)).length) : '';
