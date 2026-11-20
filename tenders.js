@@ -1,9 +1,11 @@
-import {api, casesFrom, csvFor, dateText, dayOffset, importTable, normalize, officialUrl, taipeiDay, tierLabels, versionKey} from './tender-data.js?v=20261119-2';
+import {api, casesFrom, csvFor, dateText, dayOffset, importTable, normalize, officialUrl, taipeiDay, tierLabels, versionKey} from './tender-data.js?v=20261120-1';
+import {publicDateUrl, reconcileNotices} from './tender-supplements.js?v=20261120-1';
 
 const byId = id => document.getElementById(id);
 const cacheKey = 'pcc-tenders-last-v1';
 const perPage = 40;
 let notices = [], filtered = [], tier = 'focus', limit = perPage;
+let sourceDays = [];
 let description = '', loaded = false, activeQuery = null, revision = 0, pastedTable = null, lastLiveAt = 0;
 const detailState = new Map();
 
@@ -51,14 +53,18 @@ async function jsonAt(endpoint, params, signal) {
 function cache() {
   if (!loaded) return;
   try {
-    const data = JSON.stringify({notices, description, savedAt:new Date().toISOString(), lastLiveAt});
+    const data = JSON.stringify({notices, sourceDays, description, savedAt:new Date().toISOString(), lastLiveAt});
     if (data.length < 1600000) localStorage.setItem(cacheKey, data);
   } catch { /* Storage is optional, including in private browsing. */ }
 }
-function replace(rows, source) {
+function replace(rows, source, days = []) {
   revision++; detailState.clear();
-  notices = rows; description = source; loaded = true; limit = perPage;
+  notices = rows; sourceDays = days; description = source; loaded = true; limit = perPage;
   render(); cache();
+}
+
+function currentCases() {
+  return casesFrom(reconcileNotices(notices, sourceDays).rows);
 }
 
 byId('query').addEventListener('submit', async event => {
@@ -97,9 +103,11 @@ byId('query').addEventListener('submit', async event => {
       if (missed.length) notes.push(missed.join('、') + ' 未讀取（' + interruption + '）');
       if (invalid) notes.push(invalid + ' 則缺少日期、案名或類型，未能判讀');
       const scope = checked.length ? 'OpenFun · ' + (checked.length === 1 ? checked[0] : checked.at(-1) + ' 至 ' + checked[0]) + ' · 已讀 ' + checked.length + '/' + span + ' 天，共 ' + fetched.length.toLocaleString() + ' 則各類公告' : '';
-      if (checked.length) {
-        lastLiveAt = span === 1 && end === taipeiDay() && !notes.length ? Date.now() : 0;
-        replace(fetched, [scope, ...notes].join('。'));
+      const added = reconcileNotices(fetched, dates).added;
+      if (checked.length || added) {
+        lastLiveAt = checked.length === 1 && span === 1 && end === taipeiDay() && !notes.length ? Date.now() : 0;
+        const supplement = added ? '另依機關公告補入 ' + added + ' 則' : '';
+        replace(fetched, [scope, ...notes, supplement].filter(Boolean).join('。'), dates);
         status(description + '。', !!notes.length);
       } else {
         status('本次未取得可核實的公告。' + notes.join('。') + '。可匯入招標清單。' + (loaded ? '下方仍顯示先前清單。' : ''), true);
@@ -124,7 +132,7 @@ async function readDetails(row) {
     notices = [...merged.values()];
     detailState.set(row.key, {message:'已讀取歷次公告。'});
     cache();
-    if (!casesFrom(notices).some(item => item.key === row.key)) status('已依後續公告更新「' + row.title + '」，該案已移出財物招標清單。');
+    if (!currentCases().some(item => item.key === row.key)) status('已依後續公告更新「' + row.title + '」，該案已移出財物招標清單。');
   } catch (error) {
     if (atRevision === revision) detailState.set(row.key, {message:error.message + '，可稍後重試。'});
   } finally { if (atRevision === revision) render(); }
@@ -138,6 +146,7 @@ function caseCard(row) {
   main.append(tags, node('h3',row.title), node('p',[row.org, row.dept, row.job].filter(Boolean).join(' · ')), node('small',row.why));
   const links = node('div', undefined, 'case-links');
   if (row.official) links.append(link('官方公告 ↗', row.official));
+  if (row.fromOfficial) tags.append(node('span','機關公告補入','tag'));
   const state = detailState.get(row.key);
   if (row.unit && row.job) {
     const btn = node('button', state?.busy ? '讀取中…' : '查看最新公告資料');
@@ -168,7 +177,7 @@ function caseCard(row) {
 function render() {
   const term = byId('search').value.trim().toLowerCase().replaceAll('台','臺');
   const validity = byId('validity').value;
-  const items = casesFrom(notices).filter(row => {
+  const items = currentCases().filter(row => {
     if (validity === 'open' && row.state !== '未截止') return false;
     if (validity === 'possible' && row.state === '已截止') return false;
     return !term || [row.title,row.org,row.job,row.why,row.items].join(' ').toLowerCase().replaceAll('台','臺').includes(term);
@@ -181,7 +190,11 @@ function render() {
   filtered = items.filter(row => subset(row,tier));
   const displayed = filtered.slice(0,limit), container = byId('rows');
   container.replaceChildren(...displayed.map(caseCard));
-  if (!displayed.length) container.append(node('p', loaded ? '這份清單中沒有符合目前篩選的案件。' : '尚未載入公告。','empty'));
+  if (!displayed.length) {
+    const empty = node('p', loaded ? '這份清單中沒有符合目前篩選的案件。' : '尚未載入公告。','empty');
+    if (sourceDays.length) empty.append(' ', link('核對 ' + sourceDays[0] + ' 其他來源的招標清單 ↗', publicDateUrl(sourceDays[0])));
+    container.append(empty);
+  }
   byId('count').textContent = loaded ? description + ' ｜ 顯示 ' + displayed.length + ' / ' + filtered.length + ' 案' : '';
   byId('more-wrap').hidden = filtered.length <= limit;
   byId('export-btn').disabled = !filtered.length;
@@ -248,9 +261,10 @@ function importRows(input) {
 byId('day').value = byId('day').max = taipeiDay();
 try {
   const last = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-  if (last?.notices?.length && last.description && last.savedAt && last.notices.every(r => typeof r.title === 'string' && typeof r.filename === 'string')) {
+  if (Array.isArray(last?.notices) && last.description && last.savedAt && last.notices.every(r => typeof r.title === 'string' && typeof r.filename === 'string')) {
     notices = last.notices.map(r => ({...r, official:officialUrl(r.official)})); description = last.description; loaded = true;
-    lastLiveAt = Number(last.lastLiveAt) || 0;
+    sourceDays = Array.isArray(last.sourceDays) ? last.sourceDays.filter(day => typeof day === 'string' && day.length === 10 && dateText(day) === day) : [];
+    lastLiveAt = sourceDays.length ? Number(last.lastLiveAt) || 0 : 0;
     status('顯示此裝置上次的清單（' + taipeiDay(new Date(last.savedAt)) + ' 儲存）。可按「讀取公告」更新。');
   }
 } catch { /* A missing or outdated saved view never prevents a fresh search. */ }

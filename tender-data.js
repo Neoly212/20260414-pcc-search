@@ -92,6 +92,9 @@ export function classify(row) {
     return {tier:'review', why:'手術用顯微設備，請確認醫療產品線與服務授權', rank:1};
   }
   if (matches.length) return {tier:'priority', why:matches.join('、'), rank:0};
+  if (/(?:[螢熒荧]光|fluorescen\w*).{0,14}(?:分子|量測|檢測|偵測|定量|平台|分析|光譜|儀器|detect|analy|spectr)|(?:分子|molecular)\s*(?:檢測|偵測|定量|檢驗|detection|assay|sensing)/iu.test(label)) {
+    return {tier:'review', why:'分子檢測或螢光量測，請核對偵測原理與儀器規格', rank:1};
+  }
   if (possible.test(label)) return {tier:'review', why:'可能包含實驗室品項，請查看分項或規格', rank:1};
   if (unrelated.test(label)) return {tier:'excluded', why:'標的用途明確，與實驗室產品線關聯低', rank:4};
   if (researchBuyer.test([row.org,row.dept].join(' ')) && genericEquipment.test(label.trim())) {
